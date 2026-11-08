@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Calculadora científica</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#070a12" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Calculadora" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<style>
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  :root {
+    --bg: #070a12;
+    --stroke: rgba(255, 255, 255, .09);
+    --text: #eef2ff;
+    --muted: #8b95b0;
+    --accent: #6ee7b7;
+    --danger: #fb7185;
+    --shadow: 0 24px 60px rgba(0, 0, 0, .45);
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 26px 18px;
+    background:
+      radial-gradient(1000px 620px at 12% -10%, #182441 0%, transparent 62%),
+      radial-gradient(820px 520px at 105% 108%, #0d2f2b 0%, transparent 58%),
+      var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+  .wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 384px) minmax(0, 288px);
+    gap: 18px;
+    align-items: start;
+    width: 100%;
+    max-width: 720px;
+  }
+  .calc, .hist {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .065), rgba(255, 255, 255, .018));
+    border: 1px solid var(--stroke);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .calc { padding: 16px 16px 14px; }
+
+  .head { display: flex; flex-direction: column; gap: 10px; }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    flex: none;
+  }
+  .brand h1 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .seg {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid var(--stroke);
+  }
+  .seg button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: 5px 11px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #052e26; }
+  .mem { display: inline-flex; gap: 4px; }
+  .chip {
+    appearance: none;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, .045);
+    color: #c3cce3;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    padding: 6px 8px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .chip:hover { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .14); color: #fff; }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .chip.on {
+    background: rgba(110, 231, 183, .2);
+    border-color: rgba(110, 231, 183, .45);
+    color: #d1fae5;
+  }
+  .chip svg { display: block; }
+  .mem-ind {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: var(--accent);
+    border: 1px solid rgba(110, 231, 183, .35);
+    background: rgba(110, 231, 183, .12);
+    padding: 3px 8px;
+    border-radius: 8px;
+  }
+
+  .display {
+    margin: 14px 0 12px;
+    padding: 12px 14px 8px;
+    border-radius: 18px;
+    background: rgba(3, 7, 15, .62);
+    border: 1px solid rgba(255, 255, 255, .07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -20px 44px rgba(0, 0, 0, .38);
+  }
+  .display.shake { animation: shake .32s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .expr {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #aab4cd;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14.5px;
+    line-height: 1.5;
+    text-align: right;
+    padding: 2px 0;
+    outline: none;
+    caret-color: var(--accent);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .expr::placeholder { color: rgba(139, 149, 176, .55); }
+  .expr[readonly] { cursor: default; }
+  .result-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .eq { color: rgba(255, 255, 255, .22); font-size: 17px; }
+  .result {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(26px, 6.6vw, 36px);
+    font-weight: 600;
+    letter-spacing: -.015em;
+    line-height: 1.15;
+    text-align: right;
+    color: #fff;
+    overflow-wrap: anywhere;
+    transition: opacity .12s, color .12s;
+  }
+  .result.is-preview { color: #cdd7ee; opacity: .88; }
+  .status {
+    margin: 0;
+    min-height: 15px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    text-align: right;
+    color: var(--muted);
+  }
+  .status.error { color: var(--danger); }
+
+  .keys { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px; }
+  .key {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, .07);
+    background: rgba(255, 255, 255, .045);
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    min-height: 50px;
+    padding: 2px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .12s, border-color .12s, transform .06s, color .12s;
+  }
+  .key:hover { background: rgba(255, 255, 255, .085); border-color: rgba(255, 255, 255, .14); }
+  .key:active { transform: translateY(1px) scale(.985); }
+  .key:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .key.fn { background: rgba(255, 255, 255, .028); color: #c9d3ea; font-size: 13.5px; }
+  .key.num { background: rgba(255, 255, 255, .065); font-size: 17px; font-weight: 600; }
+  .key.op { background: rgba(110, 231, 183, .1); border-color: rgba(110, 231, 183, .17); color: #a7f3d0; font-size: 18px; }
+  .key.op:hover { background: rgba(110, 231, 183, .17); }
+  .key.danger { color: #fecdd3; background: rgba(251, 113, 133, .12); border-color: rgba(251, 113, 133, .2); }
+  .key.danger:hover { background: rgba(251, 113, 133, .2); }
+  .key.accent.on {
+    background: rgba(110, 231, 183, .22);
+    border-color: rgba(110, 231, 183, .5);
+    color: #d1fae5;
+  }
+  .key.eq {
+    grid-row: span 2;
+    background: linear-gradient(180deg, #86f2c8, #34d399);
+    border-color: transparent;
+    color: #04231c;
+    font-size: 23px;
+    font-weight: 700;
+    box-shadow: 0 10px 26px rgba(52, 211, 153, .24);
+  }
+  .key.eq:hover { background: linear-gradient(180deg, #97f8d3, #3fe0aa); }
+  .key sup { font-size: .68em; vertical-align: super; }
+  .key sub { font-size: .68em; vertical-align: sub; }
+  .hint {
+    margin: 10px 2px 0;
+    font-size: 10.5px;
+    letter-spacing: .02em;
+    color: rgba(139, 149, 176, .75);
+    text-align: center;
+  }
+
+  .hist {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 552px;
+  }
+  .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .hist-head h2 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .hist-count {
+    margin-left: auto;
+    margin-right: 2px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    border: 1px solid rgba(255, 255, 255, .08);
+    background: rgba(255, 255, 255, .04);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .hist-clear {
+    appearance: none;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 11px;
+    padding: 4px 7px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .hist-clear:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+  .hist-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .hist-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 64px;
+    scrollbar-width: thin;
+  }
+  .hist-item {
+    appearance: none;
+    width: 100%;
+    text-align: right;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    padding: 7px 9px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  .hist-item:hover { background: rgba(255, 255, 255, .055); border-color: rgba(255, 255, 255, .08); }
+  .hist-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .h-expr {
+    display: block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-res {
+    display: block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13.5px;
+    color: #e8eeff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hist-empty {
+    margin: 0;
+    padding: 18px 6px;
+    font-size: 12px;
+    line-height: 1.55;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid var(--stroke);
+  }
+  .tabs button {
+    flex: 1;
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 7px 8px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .tabs button[aria-selected="true"] { background: rgba(255, 255, 255, .09); color: #fff; }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .fx { display: flex; flex-direction: column; gap: 12px; padding: 14px 0 2px; }
+  .fx-field { display: flex; flex-direction: column; gap: 6px; }
+  .fx-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .fx-label span {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    text-transform: none;
+    color: #dbe4f7;
+  }
+  .fx-row { display: flex; gap: 8px; align-items: stretch; }
+  .fx-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid rgba(255, 255, 255, .09);
+    background: rgba(3, 7, 15, .62);
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 17px;
+    font-weight: 600;
+    text-align: right;
+    padding: 10px 12px;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color .15s, background .15s;
+  }
+  .fx-input:focus { border-color: rgba(110, 231, 183, .55); background: rgba(3, 7, 15, .85); }
+  .fx-input::placeholder { color: rgba(139, 149, 176, .5); }
+  .fx-date {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid rgba(255, 255, 255, .09);
+    background: rgba(3, 7, 15, .62);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 11px;
+    border-radius: 12px;
+    outline: none;
+    color-scheme: dark;
+    transition: border-color .15s, background .15s;
+  }
+  .fx-date:focus { border-color: rgba(110, 231, 183, .55); background: rgba(3, 7, 15, .85); }
+  .fx-btn {
+    appearance: none;
+    border: 1px solid rgba(110, 231, 183, .22);
+    background: rgba(110, 231, 183, .12);
+    color: #a7f3d0;
+    font: inherit;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 0 13px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .fx-btn:hover { background: rgba(110, 231, 183, .2); }
+  .fx-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .fx-btn[disabled] { opacity: .6; cursor: progress; }
+  .fx-swap { flex: none; width: 46px; padding: 0; font-size: 16px; letter-spacing: 0; }
+  .fx-out {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 11px 14px 12px;
+    border-radius: 16px;
+    background: rgba(3, 7, 15, .62);
+    border: 1px solid rgba(255, 255, 255, .07);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -18px 40px rgba(0, 0, 0, .3);
+    text-align: right;
+  }
+  .fx-out-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .fx-result {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(24px, 6.4vw, 32px);
+    font-weight: 600;
+    letter-spacing: -.015em;
+    line-height: 1.2;
+    color: #fff;
+    overflow-wrap: anywhere;
+  }
+  .fx-detail {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .fx-actions { display: flex; flex-direction: column; gap: 6px; }
+  .fx-actions-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .fx-chips { display: flex; gap: 6px; }
+  .fx-chip {
+    flex: 1;
+    min-width: 0;
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, .045);
+    color: #dbe4f7;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 8px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .fx-chip:hover:enabled {
+    background: rgba(110, 231, 183, .14);
+    border-color: rgba(110, 231, 183, .3);
+    color: #d1fae5;
+  }
+  .fx-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .fx-chip:disabled { opacity: .45; cursor: default; }
+  .fx-meta {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--muted);
+    text-align: right;
+  }
+  .fx-meta.error { color: var(--danger); }
+
+  @media (max-width: 760px) {
+    body { padding: 16px 12px 24px; align-items: flex-start; }
+    .wrap { grid-template-columns: minmax(0, 1fr); max-width: 440px; margin: 0 auto; }
+    .hist { max-height: 220px; }
+    .key { min-height: 46px; }
+  }
+  @media (max-width: 380px) {
+    .key { min-height: 43px; font-size: 14px; }
+    .key.num { font-size: 15.5px; }
+    .key.op { font-size: 16.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main class="calc">
+    <div class="head">
+      <div class="brand">
+        <span class="dot" aria-hidden="true"></span>
+        <h1>Calculadora científica</h1>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Sección">
+        <button type="button" role="tab" id="tabCalc" aria-selected="true" aria-controls="calcPane" data-tab="calc">Científica</button>
+        <button type="button" role="tab" id="tabFx" aria-selected="false" aria-controls="fxPane" data-tab="fx">Divisas</button>
+      </div>
+      <div class="toolbar" id="calcToolbar">
+        <div class="seg" role="group" aria-label="Modo angular">
+          <button type="button" data-angle="DEG" aria-pressed="true">DEG</button>
+          <button type="button" data-angle="RAD" aria-pressed="false">RAD</button>
+        </div>
+        <div class="mem" role="group" aria-label="Memoria">
+          <button type="button" class="chip" data-mem="mc" title="Borrar memoria">MC</button>
+          <button type="button" class="chip" data-mem="mr" title="Recuperar memoria">MR</button>
+          <button type="button" class="chip" data-mem="mplus" title="Sumar a memoria">M+</button>
+          <button type="button" class="chip" data-mem="mminus" title="Restar de memoria">M−</button>
+        </div>
+        <button type="button" class="chip" id="kbdToggle" aria-pressed="false"
+                title="Escribir con el teclado" aria-label="Mostrar teclado">
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none"
+               stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2.5" y="6" width="19" height="12" rx="2.6"></rect>
+            <path d="M6.2 10h.01M9.6 10h.01M13 10h.01M16.4 10h.01M6.2 14h.01M9.6 14h5M18 14h.01"></path>
+          </svg>
+        </button>
+        <span class="mem-ind" id="memInd" hidden title="Memoria">M</span>
+      </div>
+    </div>
+
+    <div id="calcPane">
+      <section class="display" id="display">
+        <input id="expr" class="expr" type="text" inputmode="none" readonly spellcheck="false"
+               autocomplete="off" autocapitalize="off" placeholder="0" aria-label="Expresión" />
+        <div class="result-row">
+          <span class="eq" aria-hidden="true">=</span>
+          <output id="result" class="result" aria-live="polite">0</output>
+        </div>
+        <p class="status" id="status" role="status"></p>
+      </section>
+
+      <div class="keys" id="keys"></div>
+      <p class="hint">Toca las teclas · el icono ⌨ activa el teclado · Enter calcula · Esc borra</p>
+    </div>
+
+    <section class="fx" id="fxPane" hidden aria-label="Conversor de dólares y bolívares">
+      <div class="fx-field">
+        <label class="fx-label" for="fxAmount">Monto en
+          <span id="fxFromLabel">dólares (USD)</span>
+        </label>
+        <div class="fx-row">
+          <input id="fxAmount" class="fx-input" type="text" inputmode="decimal" autocomplete="off"
+                 spellcheck="false" placeholder="1" aria-label="Monto a convertir" />
+          <button type="button" class="fx-btn fx-swap" id="fxSwap" title="Invertir la dirección"
+                  aria-label="Invertir la dirección">⇅</button>
+        </div>
+      </div>
+
+      <div class="fx-out">
+        <span class="fx-out-label" id="fxToLabel">Bolívares (VES)</span>
+        <output class="fx-result" id="fxResult">—</output>
+        <span class="fx-detail" id="fxDetail"></span>
+      </div>
+
+      <div class="fx-actions">
+        <span class="fx-actions-label">Llevar a la calculadora</span>
+        <div class="fx-chips">
+          <button type="button" class="fx-chip" id="fxUseSource">Usar monto</button>
+          <button type="button" class="fx-chip" id="fxUseResult">Usar resultado</button>
+        </div>
+      </div>
+
+      <div class="fx-field">
+        <label class="fx-label" for="fxDate">Fecha de la tasa</label>
+        <div class="fx-row">
+          <input id="fxDate" class="fx-date" type="date" aria-label="Fecha de la tasa" />
+          <button type="button" class="fx-btn" id="fxToday" title="Usar la tasa de hoy">Hoy</button>
+        </div>
+      </div>
+
+      <div class="fx-field">
+        <label class="fx-label" for="fxRate">Tasa BCV (Bs por dólar)</label>
+        <div class="fx-row">
+          <input id="fxRate" class="fx-input" type="text" inputmode="decimal" autocomplete="off"
+                 spellcheck="false" placeholder="0,00" aria-label="Tasa BCV" />
+          <button type="button" class="fx-btn" id="fxRefresh">Actualizar</button>
+        </div>
+      </div>
+      <p class="fx-meta" id="fxMeta"></p>
+    </section>
+  </main>
+
+  <aside class="hist" aria-label="Historial de cálculos">
+    <div class="hist-head">
+      <h2>Historial</h2>
+      <span class="hist-count" id="histCount" title="Máximo 30 cálculos">0/30</span>
+      <button type="button" class="hist-clear" id="histClear">Limpiar</button>
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </aside>
+</div>
+
+<script>
+// ==== motor ====
+let angleMode = 'DEG';
+let ansValue = 0;
+
+class CalcError extends Error {}
+
+function toRad(x) { return angleMode === 'DEG' ? (x * Math.PI) / 180 : x; }
+function fromRad(x) { return angleMode === 'DEG' ? (x * 180) / Math.PI : x; }
+
+const FUNCS = {
+  sin: (x) => Math.sin(toRad(x)),
+  cos: (x) => Math.cos(toRad(x)),
+  tan: (x) => Math.tan(toRad(x)),
+  asin: (x) => fromRad(Math.asin(x)),
+  acos: (x) => fromRad(Math.acos(x)),
+  atan: (x) => fromRad(Math.atan(x)),
+  sinh: Math.sinh,
+  cosh: Math.cosh,
+  tanh: Math.tanh,
+  asinh: Math.asinh,
+  acosh: Math.acosh,
+  atanh: Math.atanh,
+  ln: Math.log,
+  log: Math.log10,
+  sqrt: Math.sqrt,
+  cbrt: Math.cbrt,
+  abs: Math.abs,
+  exp: Math.exp,
+  round: Math.round,
+  floor: Math.floor,
+  ceil: Math.ceil,
+  sign: Math.sign
+};
+
+function factorial(n) {
+  if (!Number.isInteger(n) || n < 0) throw new CalcError('El factorial necesita un entero ≥ 0');
+  if (n > 170) throw new CalcError('El factorial es demasiado grande');
+  let out = 1;
+  for (let i = 2; i <= n; i++) out *= i;
+  return out;
+}
+
+function tokenize(src) {
+  const tokens = [];
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === ' ') { i++; continue; }
+    if (c === '.' || (c >= '0' && c <= '9')) {
+      let j = i, dots = 0;
+      while (j < src.length && (src[j] === '.' || (src[j] >= '0' && src[j] <= '9'))) {
+        if (src[j] === '.') dots++;
+        j++;
+      }
+      if (dots > 1) throw new CalcError('Número mal escrito');
+      const text = src.slice(i, j);
+      if (text === '.') throw new CalcError('Número mal escrito');
+      tokens.push({ type: 'num', value: parseFloat(text) });
+      i = j;
+      continue;
+    }
+    if (/[a-zA-Zπ]/.test(c)) {
+      let j = i;
+      while (j < src.length && /[a-zA-Zπ]/.test(src[j])) j++;
+      tokens.push({ type: 'id', value: src.slice(i, j) });
+      i = j;
+      continue;
+    }
+    if ('+-*/^!%'.includes(c)) { tokens.push({ type: 'op', value: c }); i++; continue; }
+    if (c === '(') { tokens.push({ type: 'lp' }); i++; continue; }
+    if (c === ')') { tokens.push({ type: 'rp' }); i++; continue; }
+    throw new CalcError('Símbolo no válido: ' + c);
+  }
+  return tokens;
+}
+
+class Parser {
+  constructor(tokens) { this.tokens = tokens; this.pos = 0; }
+  peek() { return this.tokens[this.pos]; }
+  take() { return this.tokens[this.pos++]; }
+
+  parse() {
+    if (this.tokens.length === 0) throw new CalcError('Escribe una expresión');
+    const value = this.parseSum();
+    if (this.pos < this.tokens.length) throw new CalcError('Sobra algo en la expresión');
+    return value;
+  }
+
+  parseSum() {
+    let value = this.parseProduct();
+    for (;;) {
+      const t = this.peek();
+      if (t && t.type === 'op' && (t.value === '+' || t.value === '-')) {
+        this.take();
+        const rhs = this.parseProduct();
+        value = t.value === '+' ? value + rhs : value - rhs;
+      } else break;
+    }
+    return value;
+  }
+
+  parseProduct() {
+    let value = this.parseUnary();
+    for (;;) {
+      const t = this.peek();
+      if (!t) break;
+      if (t.type === 'op' && (t.value === '*' || t.value === '/')) {
+        this.take();
+        const rhs = this.parseUnary();
+        if (t.value === '*') value = value * rhs;
+        else {
+          if (rhs === 0) throw new CalcError('No se puede dividir entre 0');
+          value = value / rhs;
+        }
+      } else if (t.type === 'num' || t.type === 'id' || t.type === 'lp') {
+        value = value * this.parseUnary();
+      } else break;
+    }
+    return value;
+  }
+
+  parseUnary() {
+    const t = this.peek();
+    if (t && t.type === 'op' && (t.value === '+' || t.value === '-')) {
+      this.take();
+      const v = this.parseUnary();
+      return t.value === '-' ? -v : v;
+    }
+    return this.parsePower();
+  }
+
+  parsePower() {
+    const base = this.parsePostfix();
+    const t = this.peek();
+    if (t && t.type === 'op' && t.value === '^') {
+      this.take();
+      const exponent = this.parseUnary();
+      const out = Math.pow(base, exponent);
+      if (Number.isNaN(out)) throw new CalcError('Potencia no definida');
+      return out;
+    }
+    return base;
+  }
+
+  parsePostfix() {
+    let value = this.parseAtom();
+    for (;;) {
+      const t = this.peek();
+      if (t && t.type === 'op' && t.value === '!') {
+        this.take();
+        value = factorial(value);
+      } else if (t && t.type === 'op' && t.value === '%') {
+        this.take();
+        value = value / 100;
+      } else break;
+    }
+    return value;
+  }
+
+  parseAtom() {
+    const t = this.take();
+    if (!t) throw new CalcError('La expresión está incompleta');
+    if (t.type === 'num') return t.value;
+    if (t.type === 'lp') {
+      const value = this.parseSum();
+      const close = this.take();
+      if (!close || close.type !== 'rp') throw new CalcError('Falta cerrar un paréntesis');
+      return value;
+    }
+    if (t.type === 'id') {
+      const name = t.value.toLowerCase();
+      if (name === 'pi' || name === 'π') return Math.PI;
+      if (name === 'e') return Math.E;
+      if (name === 'ans') return ansValue;
+      const fn = FUNCS[name];
+      if (!fn) throw new CalcError('«' + t.value + '» no es una función');
+      const open = this.take();
+      if (!open || open.type !== 'lp') throw new CalcError('Falta un ( después de ' + t.value);
+      const arg = this.parseSum();
+      const close = this.take();
+      if (!close || close.type !== 'rp') throw new CalcError('Falta cerrar un paréntesis');
+      const out = fn(arg);
+      if (Number.isNaN(out)) throw new CalcError('«' + t.value + '» no admite ese valor');
+      return out;
+    }
+    throw new CalcError('Expresión no válida');
+  }
+}
+
+function evaluate(raw) {
+  const src = String(raw)
+    .replace(/×/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/−/g, '-')
+    .replace(/,/g, '.')
+    .replace(/\s+/g, '');
+  if (!src) throw new CalcError('Escribe una expresión');
+  let value;
+  try {
+    value = new Parser(tokenize(src)).parse();
+  } catch (err) {
+    const open = (src.match(/\(/g) || []).length - (src.match(/\)/g) || []).length;
+    if (open > 0) {
+      try { value = new Parser(tokenize(src + ')'.repeat(open))).parse(); }
+      catch (_) { throw err; }
+    } else {
+      throw err;
+    }
+  }
+  if (Number.isNaN(value)) throw new CalcError('Resultado no definido');
+  if (!Number.isFinite(value)) throw new CalcError('El resultado no es finito');
+  if (Math.abs(value) > 1e300) throw new CalcError('El número es demasiado grande');
+  return value;
+}
+
+function fmt(x) {
+  if (!Number.isFinite(x)) return 'Error';
+  if (x === 0) return '0';
+  const abs = Math.abs(x);
+  if (abs >= 1e12 || abs < 1e-9) {
+    const parts = x.toExponential(8).split('e');
+    const mantissa = parts[0].replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    return mantissa + 'e' + parts[1].replace('+', '');
+  }
+  let text = Number(x.toPrecision(12)).toString();
+  if (text.indexOf('e') !== -1) return text;
+  const negative = text.charAt(0) === '-';
+  if (negative) text = text.slice(1);
+  const pieces = text.split('.');
+  const grouped = pieces[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return (negative ? '-' : '') + grouped + (pieces[1] ? '.' + pieces[1] : '');
+}
+// ==== fin motor ====
+
+const exprInput = document.getElementById('expr');
+const resultEl = document.getElementById('result');
+const statusEl = document.getElementById('status');
+const keysEl = document.getElementById('keys');
+const displayEl = document.getElementById('display');
+const histList = document.getElementById('histList');
+const histClear = document.getElementById('histClear');
+const histCount = document.getElementById('histCount');
+const memInd = document.getElementById('memInd');
+const kbdToggle = document.getElementById('kbdToggle');
+const angleButtons = Array.prototype.slice.call(document.querySelectorAll('[data-angle]'));
+const calcPane = document.getElementById('calcPane');
+const fxPane = document.getElementById('fxPane');
+const calcToolbar = document.getElementById('calcToolbar');
+const tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-tab]'));
+const fxAmount = document.getElementById('fxAmount');
+const fxRate = document.getElementById('fxRate');
+const fxResult = document.getElementById('fxResult');
+const fxDetail = document.getElementById('fxDetail');
+const fxMeta = document.getElementById('fxMeta');
+const fxFromLabel = document.getElementById('fxFromLabel');
+const fxToLabel = document.getElementById('fxToLabel');
+const fxSwap = document.getElementById('fxSwap');
+const fxRefresh = document.getElementById('fxRefresh');
+const fxUseSource = document.getElementById('fxUseSource');
+const fxUseResult = document.getElementById('fxUseResult');
+const fxDate = document.getElementById('fxDate');
+const fxToday = document.getElementById('fxToday');
+
+const RATE_API = 'https://ve.dolarapi.com/v1/dolares/oficial';
+const HISTORY_API = 'https://ve.dolarapi.com/v1/historicos/dolares/oficial/';
+const RATE_MIN_DATE = '2023-01-03';
+const RATE_MAX_AGE = 6 * 60 * 60 * 1000;
+
+const STORE_KEY = 'calculadora-cientifica-v1';
+
+const state = {
+  expr: '',
+  caret: 0,
+  second: false,
+  keyboard: false,
+  mem: 0,
+  ansText: '0',
+  history: [],
+  lastWasEval: false,
+  tab: 'calc',
+  fx: {
+    amount: '1',
+    dir: 'usd2ves',
+    date: todayISO(),
+    rate: 0,
+    source: '',
+    rateDate: null,
+    fetchedAt: 0,
+    loading: false,
+    error: '',
+    cache: {}
+  }
+};
+
+const KEY_DEFS = [
+  { label: 'AC', act: 'clear', cls: 'fn danger' },
+  { label: '⌫', act: 'back', cls: 'fn' },
+  { label: '(', ins: '(', cls: 'fn' },
+  { label: ')', ins: ')', cls: 'fn' },
+  { label: '%', ins: '%', cls: 'fn' },
+  { label: '÷', ins: '/', cls: 'op' },
+
+  { label: '2nd', act: 'second', cls: 'fn accent' },
+  { label: 'sin', ins: 'sin(', alt: 'sin<sup>−1</sup>', altIns: 'asin(', cls: 'fn' },
+  { label: 'cos', ins: 'cos(', alt: 'cos<sup>−1</sup>', altIns: 'acos(', cls: 'fn' },
+  { label: 'tan', ins: 'tan(', alt: 'tan<sup>−1</sup>', altIns: 'atan(', cls: 'fn' },
+  { label: 'ln', ins: 'ln(', alt: 'e<sup>x</sup>', altIns: 'exp(', cls: 'fn' },
+  { label: '×', ins: '*', cls: 'op' },
+
+  { label: 'x<sup>2</sup>', ins: '^2', alt: 'x<sup>3</sup>', altIns: '^3', cls: 'fn' },
+  { label: '7', ins: '7', cls: 'num' },
+  { label: '8', ins: '8', cls: 'num' },
+  { label: '9', ins: '9', cls: 'num' },
+  { label: 'log', ins: 'log(', alt: '10<sup>x</sup>', altIns: '10^', cls: 'fn' },
+  { label: '−', ins: '-', cls: 'op' },
+
+  { label: 'x<sup>y</sup>', ins: '^', alt: '<sup>y</sup>√x', altIns: '^(1/', cls: 'fn' },
+  { label: '4', ins: '4', cls: 'num' },
+  { label: '5', ins: '5', cls: 'num' },
+  { label: '6', ins: '6', cls: 'num' },
+  { label: '√', ins: 'sqrt(', alt: '∛', altIns: 'cbrt(', cls: 'fn' },
+  { label: '+', ins: '+', cls: 'op' },
+
+  { label: '1/x', ins: '1/(', alt: '|x|', altIns: 'abs(', cls: 'fn' },
+  { label: '1', ins: '1', cls: 'num' },
+  { label: '2', ins: '2', cls: 'num' },
+  { label: '3', ins: '3', cls: 'num' },
+  { label: 'n!', ins: '!', cls: 'fn' },
+  { label: '=', act: 'equals', cls: 'eq' },
+
+  { label: 'π', ins: 'π', cls: 'fn' },
+  { label: '0', ins: '0', cls: 'num' },
+  { label: '.', ins: '.', cls: 'num' },
+  { label: 'Ans', ins: 'Ans', cls: 'fn' },
+  { label: 'e', ins: 'e', cls: 'fn' }
+];
+
+function buildKeys() {
+  KEY_DEFS.forEach(function (def) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'key ' + (def.cls || '');
+    btn.innerHTML = '<span class="k">' + def.label + '</span>';
+    btn._def = def;
+    if (def.act === 'second') btn.setAttribute('aria-pressed', 'false');
+    keysEl.appendChild(btn);
+  });
+}
+
+function renderKeys() {
+  Array.prototype.forEach.call(keysEl.children, function (btn) {
+    const def = btn._def;
+    if (!def) return;
+    const useAlt = Boolean(state.second && def.alt);
+    const label = useAlt ? def.alt : def.label;
+    const ins = useAlt ? (def.altIns || def.ins) : def.ins;
+    btn.dataset.ins = ins || '';
+    if (btn._label !== label) {
+      btn._label = label;
+      btn.innerHTML = '<span class="k">' + label + '</span>';
+    }
+    if (def.act === 'second') {
+      btn.classList.toggle('on', state.second);
+      btn.setAttribute('aria-pressed', String(state.second));
+    }
+  });
+}
+
+function syncExpr() {
+  exprInput.value = state.expr;
+  const caret = state.keyboard
+    ? Math.min(Math.max(state.caret, 0), state.expr.length)
+    : state.expr.length;
+  state.caret = caret;
+  if (state.keyboard) {
+    try {
+      exprInput.focus({ preventScroll: true });
+      exprInput.setSelectionRange(caret, caret);
+    } catch (_) { /* sin foco disponible */ }
+  } else {
+    exprInput.scrollLeft = exprInput.scrollWidth;
+  }
+}
+
+function setKeyboardMode(on) {
+  state.keyboard = Boolean(on);
+  exprInput.readOnly = !state.keyboard;
+  exprInput.setAttribute('inputmode', state.keyboard ? 'text' : 'none');
+  kbdToggle.classList.toggle('on', state.keyboard);
+  kbdToggle.setAttribute('aria-pressed', String(state.keyboard));
+  kbdToggle.title = state.keyboard ? 'Ocultar el teclado' : 'Escribir con el teclado';
+  kbdToggle.setAttribute('aria-label', state.keyboard ? 'Ocultar el teclado' : 'Mostrar teclado');
+  state.caret = state.expr.length;
+  if (state.keyboard) {
+    syncExpr();
+  } else {
+    exprInput.blur();
+    setStatus('');
+  }
+}
+
+function setStatus(message, isError) {
+  statusEl.textContent = message || '';
+  statusEl.classList.toggle('error', Boolean(isError && message));
+}
+
+function updateResult() {
+  const raw = state.expr.trim();
+  let text = '0';
+  let preview = false;
+  if (raw) {
+    if (state.lastWasEval) {
+      text = state.ansText;
+    } else {
+      try {
+        text = fmt(evaluate(state.expr));
+        preview = true;
+      } catch (_) {
+        text = state.ansText;
+      }
+    }
+  }
+  resultEl.textContent = text;
+  resultEl.classList.toggle('is-preview', preview);
+}
+
+function render() {
+  syncExpr();
+  updateResult();
+}
+
+function insert(text) {
+  if (!text) return;
+  if (state.lastWasEval) {
+    const startsValue = /^[(0-9.a-zA-Zπ]/.test(text);
+    if (!startsValue) {
+      setStatus('Para usar el resultado anterior, pulsa Ans');
+      return;
+    }
+    state.expr = '';
+    state.caret = 0;
+  }
+  const caret = state.keyboard
+    ? Math.min(Math.max(state.caret, 0), state.expr.length)
+    : state.expr.length;
+  state.expr = state.expr.slice(0, caret) + text + state.expr.slice(caret);
+  state.caret = caret + text.length;
+  setStatus('');
+}
+
+function backspace() {
+  if (state.lastWasEval) {
+    state.lastWasEval = false;
+  }
+  const caret = state.keyboard
+    ? Math.min(Math.max(state.caret, 0), state.expr.length)
+    : state.expr.length;
+  if (caret > 0) {
+    state.expr = state.expr.slice(0, caret - 1) + state.expr.slice(caret);
+    state.caret = caret - 1;
+  }
+  setStatus('');
+  render();
+}
+
+function clearAll() {
+  state.expr = '';
+  state.caret = 0;
+  state.lastWasEval = false;
+  if (state.second) {
+    state.second = false;
+    renderKeys();
+  }
+  setStatus('');
+  render();
+}
+
+function shakeDisplay() {
+  displayEl.classList.remove('shake');
+  void displayEl.offsetWidth;
+  displayEl.classList.add('shake');
+}
+
+function doEquals() {
+  if (state.lastWasEval) return;
+  let value;
+  try {
+    value = evaluate(state.expr);
+  } catch (err) {
+    setStatus(err && err.message ? err.message : 'Expresión no válida', true);
+    shakeDisplay();
+    return;
+  }
+  ansValue = value;
+  state.ansText = fmt(value);
+  state.lastWasEval = true;
+  const expression = state.expr.trim();
+  if (expression) {
+    state.history.unshift({ expr: expression, result: state.ansText });
+    state.history = state.history.slice(0, 30);
+    renderHistory();
+  }
+  setStatus('');
+  updateResult();
+  saveState();
+}
+
+function numberText(n) {
+  if (!Number.isFinite(n)) return '0';
+  const text = String(Number(n.toPrecision(12)));
+  return n < 0 ? '(' + text + ')' : text;
+}
+
+function currentValue() {
+  try {
+    return evaluate(state.expr);
+  } catch (_) {
+    return ansValue;
+  }
+}
+
+function updateMem() {
+  memInd.hidden = state.mem === 0;
+  memInd.title = 'Memoria: ' + fmt(state.mem);
+}
+
+function handleMemory(action) {
+  if (action === 'mc') {
+    state.mem = 0;
+    updateMem();
+    setStatus('Memoria borrada');
+  } else if (action === 'mr') {
+    insert(numberText(state.mem));
+    return;
+  } else if (action === 'mplus') {
+    state.mem += currentValue();
+    updateMem();
+    setStatus('M = ' + fmt(state.mem));
+  } else if (action === 'mminus') {
+    state.mem -= currentValue();
+    updateMem();
+    setStatus('M = ' + fmt(state.mem));
+  }
+  saveState();
+}
+
+const MONEY_FORMAT = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const RATE_FORMAT = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+
+function parseMoneyText(text) {
+  let cleaned = String(text).replace(/[^\d.,-]/g, '');
+  if (!cleaned) return NaN;
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
+  if (lastComma > -1 && lastDot > -1) {
+    if (lastComma > lastDot) cleaned = cleaned.replace(/\./g, '').replace(/,/g, '.');
+    else cleaned = cleaned.replace(/,/g, '');
+  } else if (lastComma > -1) {
+    cleaned = cleaned.replace(/,/g, '.');
+  } else if ((cleaned.match(/\./g) || []).length > 1) {
+    cleaned = cleaned.replace(/\./g, '');
+  }
+  const value = Number(cleaned);
+  return Number.isFinite(value) && value > 0 ? value : NaN;
+}
+
+function formatMoney(value) {
+  return MONEY_FORMAT.format(value);
+}
+
+function formatRateValue(value) {
+  return RATE_FORMAT.format(value);
+}
+
+function formatIsoDay(iso) {
+  if (typeof iso !== 'string') return '';
+  const parts = iso.slice(0, 10).split('-');
+  if (parts.length !== 3) return '';
+  return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+function todayISO() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return now.getFullYear() + '-' + month + '-' + day;
+}
+
+function shiftIsoDate(iso, days) {
+  const parts = iso.split('-');
+  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  date.setDate(date.getDate() + days);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return date.getFullYear() + '-' + month + '-' + day;
+}
+
+function renderFx() {
+  const fx = state.fx;
+  const usdToVes = fx.dir === 'usd2ves';
+  fxFromLabel.textContent = usdToVes ? 'dólares (USD)' : 'bolívares (VES)';
+  fxToLabel.textContent = usdToVes ? 'Bolívares (VES)' : 'Dólares (USD)';
+  if (fxDate.value !== fx.date) fxDate.value = fx.date;
+
+  if (document.activeElement !== fxRate) {
+    fxRate.value = fx.rate > 0 ? formatRateValue(fx.rate) : '';
+  }
+
+  const amount = parseMoneyText(fxAmount.value);
+  const hasConversion = fx.rate > 0 && !Number.isNaN(amount);
+  if (hasConversion) {
+    const converted = usdToVes ? amount * fx.rate : amount / fx.rate;
+    fxResult.textContent = (usdToVes ? 'Bs. ' : '$ ') + formatMoney(converted);
+    fxDetail.textContent = (usdToVes ? formatMoney(amount) + ' USD' : 'Bs. ' + formatMoney(amount)) +
+      ' · 1 USD = Bs. ' + formatRateValue(fx.rate);
+    fxUseSource.disabled = false;
+    fxUseResult.disabled = false;
+    fxUseSource.textContent = 'Usar ' + formatMoney(amount) + (usdToVes ? ' USD' : ' Bs.');
+    fxUseResult.textContent = 'Usar ' + formatMoney(converted) + (usdToVes ? ' Bs.' : ' USD');
+  } else {
+    fxResult.textContent = '—';
+    fxDetail.textContent = fx.rate > 0
+      ? 'Escribe un monto para convertir'
+      : 'Escribe la tasa del BCV para empezar';
+    fxUseSource.disabled = true;
+    fxUseResult.disabled = true;
+    fxUseSource.textContent = 'Usar monto';
+    fxUseResult.textContent = 'Usar resultado';
+  }
+
+  fxRefresh.disabled = Boolean(fx.loading);
+  fxRefresh.textContent = fx.loading ? '…' : 'Actualizar';
+
+  if (fx.loading) {
+    fxMeta.textContent = 'Buscando la tasa del BCV…';
+    fxMeta.classList.remove('error');
+    return;
+  }
+  if (fx.error) {
+    fxMeta.textContent = fx.error;
+    fxMeta.classList.toggle('error', !(fx.rate > 0));
+    return;
+  }
+  fxMeta.classList.remove('error');
+  if (!(fx.rate > 0)) {
+    fxMeta.textContent = 'La tasa se guarda en este dispositivo para usarla sin conexión.';
+  } else if (fx.source === 'manual') {
+    fxMeta.textContent = 'Tasa manual del ' + formatIsoDay(fx.date);
+  } else if (fx.rateDate && fx.rateDate.slice(0, 10) !== fx.date) {
+    fxMeta.textContent = 'Tasa del BCV del ' + formatIsoDay(fx.rateDate) +
+      ' · vigente el ' + formatIsoDay(fx.date);
+  } else {
+    fxMeta.textContent = 'Tasa oficial del BCV · ' + formatIsoDay(fx.date);
+  }
+}
+
+function insertConversion(value) {
+  if (!Number.isFinite(value) || value <= 0) return;
+  const text = String(Number(value.toPrecision(12)));
+  const trimmed = state.expr.trim();
+  const appending = !trimmed || /[+\-*/^(]$/.test(trimmed);
+  state.expr = appending ? state.expr + text : text;
+  state.caret = state.expr.length;
+  state.lastWasEval = false;
+  if (state.tab !== 'calc') setTab('calc');
+  render();
+  setStatus('Valor llevado a la calculadora: ' + text);
+  saveState();
+}
+
+function pruneRateCache() {
+  const keys = Object.keys(state.fx.cache).sort();
+  while (keys.length > 90) {
+    delete state.fx.cache[keys.shift()];
+  }
+}
+
+function storeRate(date, value, published, source) {
+  const fx = state.fx;
+  fx.rate = value;
+  fx.rateDate = published;
+  fx.source = source;
+  fx.fetchedAt = Date.now();
+  fx.error = '';
+  fx.cache[date] = { rate: value, published: published, source: source, fetchedAt: fx.fetchedAt };
+  pruneRateCache();
+}
+
+function fetchForDate(date) {
+  const fx = state.fx;
+  if (fx.loading) return;
+  fx.loading = true;
+  fx.error = '';
+  renderFx();
+  const finish = function () {
+    fx.loading = false;
+    renderFx();
+    saveState();
+  };
+  if (typeof fetch !== 'function') {
+    fx.error = 'No se pudo consultar la tasa del BCV. Escríbela a mano.';
+    finish();
+    return;
+  }
+  if (date === todayISO()) {
+    fetch(RATE_API, { cache: 'no-store' })
+      .then(function (response) {
+        if (!response || !response.ok) throw new Error('respuesta');
+        return response.json();
+      })
+      .then(function (data) {
+        const value = Number(data && (data.promedio || data.venta || 0));
+        if (!Number.isFinite(value) || value <= 0) throw new Error('tasa');
+        const published = typeof data.fechaActualizacion === 'string'
+          ? data.fechaActualizacion.slice(0, 10)
+          : date;
+        storeRate(date, value, published, 'bcv');
+        finish();
+      }, function () {
+        fx.error = fx.rate > 0
+          ? 'Sin conexión · usando la última tasa guardada'
+          : 'No se pudo consultar la tasa del BCV. Escríbela a mano.';
+        finish();
+      });
+    return;
+  }
+  lookupHistoric(date, 0, finish);
+}
+
+function lookupHistoric(date, attempt, finish) {
+  const fx = state.fx;
+  if (attempt > 7 || date < RATE_MIN_DATE) {
+    fx.error = 'No hay tasa publicada cerca de esa fecha. Escríbela a mano.';
+    finish();
+    return;
+  }
+  fetch(HISTORY_API + date.replace(/-/g, '/'), { cache: 'no-store' })
+    .then(function (response) {
+      if (!response || !response.ok) throw new Error('sin datos');
+      return response.json();
+    })
+    .then(function (data) {
+      const value = Number(data && (data.promedio || data.venta || 0));
+      if (!Number.isFinite(value) || value <= 0) throw new Error('tasa');
+      const published = typeof data.fecha === 'string' ? data.fecha.slice(0, 10) : date;
+      storeRate(fx.date, value, published, 'bcv');
+      finish();
+    }, function () {
+      lookupHistoric(shiftIsoDate(date, -1), attempt + 1, finish);
+    });
+}
+
+function ensureRateForDate() {
+  const fx = state.fx;
+  if (fx.rate > 0) {
+    if (fx.source === 'manual') return;
+    if (fx.date !== todayISO()) return;
+    if (Date.now() - (fx.fetchedAt || 0) < RATE_MAX_AGE) return;
+  }
+  fetchForDate(fx.date);
+}
+
+function selectDate(value) {
+  const fx = state.fx;
+  const today = todayISO();
+  let date = /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? value : today;
+  if (date > today) date = today;
+  if (date < RATE_MIN_DATE) date = RATE_MIN_DATE;
+  fx.date = date;
+  fx.error = '';
+  const cached = fx.cache[date];
+  if (cached && cached.rate > 0) {
+    fx.rate = cached.rate;
+    fx.rateDate = cached.published;
+    fx.source = cached.source;
+    fx.fetchedAt = cached.fetchedAt || 0;
+    renderFx();
+    saveState();
+    if (date === today && cached.source !== 'manual' && Date.now() - (cached.fetchedAt || 0) >= RATE_MAX_AGE) {
+      fetchForDate(date);
+    }
+    return;
+  }
+  fx.rate = 0;
+  fx.rateDate = null;
+  fx.source = '';
+  fx.fetchedAt = 0;
+  renderFx();
+  saveState();
+  fetchForDate(date);
+}
+
+function setTab(tab) {
+  state.tab = tab === 'fx' ? 'fx' : 'calc';
+  const isCalc = state.tab === 'calc';
+  calcPane.hidden = !isCalc;
+  calcToolbar.hidden = !isCalc;
+  fxPane.hidden = isCalc;
+  tabButtons.forEach(function (btn) {
+    btn.setAttribute('aria-selected', String(btn.dataset.tab === state.tab));
+  });
+  if (isCalc) {
+    updateResult();
+  } else {
+    exprInput.blur();
+    fxDate.max = todayISO();
+    renderFx();
+    ensureRateForDate();
+  }
+}
+
+function renderHistory() {
+  histCount.textContent = state.history.length + '/30';
+  histList.innerHTML = '';
+  if (!state.history.length) {
+    const empty = document.createElement('p');
+    empty.className = 'hist-empty';
+    empty.textContent = 'Aún no hay cálculos. Pulsa = y aparecerán aquí.';
+    histList.appendChild(empty);
+    return;
+  }
+  state.history.forEach(function (item) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'hist-item';
+    const expr = document.createElement('span');
+    expr.className = 'h-expr';
+    expr.textContent = item.expr;
+    const res = document.createElement('span');
+    res.className = 'h-res';
+    res.textContent = '= ' + item.result;
+    btn.appendChild(expr);
+    btn.appendChild(res);
+    btn.addEventListener('click', function () {
+      state.expr = item.expr;
+      state.caret = item.expr.length;
+      state.lastWasEval = false;
+      setStatus('');
+      render();
+    });
+    histList.appendChild(btn);
+  });
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      angle: angleMode,
+      mem: state.mem,
+      ans: ansValue,
+      history: state.history.slice(0, 30),
+      fx: {
+        amount: state.fx.amount,
+        dir: state.fx.dir,
+        date: state.fx.date,
+        rate: state.fx.rate,
+        source: state.fx.source,
+        rateDate: state.fx.rateDate,
+        fetchedAt: state.fx.fetchedAt,
+        cache: state.fx.cache
+      }
+    }));
+  } catch (_) { /* almacenamiento no disponible */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.angle === 'DEG' || data.angle === 'RAD') angleMode = data.angle;
+    if (typeof data.mem === 'number' && Number.isFinite(data.mem)) state.mem = data.mem;
+    if (typeof data.ans === 'number' && Number.isFinite(data.ans)) {
+      ansValue = data.ans;
+      state.ansText = fmt(ansValue);
+    }
+    if (data.fx && typeof data.fx === 'object') {
+      const fx = data.fx;
+      const today = todayISO();
+      if (typeof fx.amount === 'string') state.fx.amount = fx.amount;
+      if (fx.dir === 'usd2ves' || fx.dir === 'ves2usd') state.fx.dir = fx.dir;
+      if (typeof fx.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fx.date)) {
+        state.fx.date = fx.date > today ? today : fx.date;
+      }
+      if (fx.cache && typeof fx.cache === 'object') {
+        Object.keys(fx.cache).forEach(function (key) {
+          const entry = fx.cache[key];
+          if (entry && typeof entry.rate === 'number' && entry.rate > 0) {
+            state.fx.cache[key] = {
+              rate: entry.rate,
+              published: typeof entry.published === 'string' ? entry.published : key,
+              source: entry.source === 'manual' ? 'manual' : 'bcv',
+              fetchedAt: typeof entry.fetchedAt === 'number' ? entry.fetchedAt : 0
+            };
+          }
+        });
+      }
+      if (typeof fx.rate === 'number' && fx.rate > 0) {
+        const source = fx.source === 'manual' ? 'manual' : 'bcv';
+        const published = typeof fx.rateDate === 'string' ? fx.rateDate : state.fx.date;
+        state.fx.cache[state.fx.date] = {
+          rate: fx.rate,
+          published: published,
+          source: source,
+          fetchedAt: typeof fx.fetchedAt === 'number' ? fx.fetchedAt : 0
+        };
+      }
+      const cached = state.fx.cache[state.fx.date];
+      if (cached && cached.rate > 0) {
+        state.fx.rate = cached.rate;
+        state.fx.rateDate = cached.published;
+        state.fx.source = cached.source;
+        state.fx.fetchedAt = cached.fetchedAt || 0;
+      } else {
+        state.fx.rate = 0;
+        state.fx.rateDate = null;
+        state.fx.source = '';
+        state.fx.fetchedAt = 0;
+      }
+    }
+    if (Array.isArray(data.history)) {
+      state.history = data.history
+        .filter(function (item) { return item && typeof item.expr === 'string' && typeof item.result === 'string'; })
+        .slice(0, 30);
+    }
+  } catch (_) { /* datos corruptos */ }
+}
+
+function syncAngleButtons() {
+  angleButtons.forEach(function (btn) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.angle === angleMode));
+  });
+}
+
+keysEl.addEventListener('click', function (event) {
+  const btn = event.target.closest ? event.target.closest('.key') : null;
+  if (!btn || !btn._def) return;
+  const def = btn._def;
+  if (def.act === 'clear') clearAll();
+  else if (def.act === 'back') backspace();
+  else if (def.act === 'equals') doEquals();
+  else if (def.act === 'second') { state.second = !state.second; renderKeys(); }
+  else if (btn.dataset.ins) insert(btn.dataset.ins);
+  if (!state.keyboard) btn.blur();
+});
+
+exprInput.addEventListener('input', function () {
+  state.expr = exprInput.value;
+  state.caret = typeof exprInput.selectionStart === 'number' ? exprInput.selectionStart : state.expr.length;
+  state.lastWasEval = false;
+  setStatus('');
+  updateResult();
+});
+
+['click', 'keyup', 'select', 'focus'].forEach(function (evt) {
+  exprInput.addEventListener(evt, function () {
+    if (typeof exprInput.selectionStart === 'number') state.caret = exprInput.selectionStart;
+  });
+});
+
+exprInput.addEventListener('keydown', function (event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    doEquals();
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    clearAll();
+  }
+});
+
+document.addEventListener('keydown', function (event) {
+  const target = event.target;
+  if (target === exprInput) return;
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+  if (state.tab !== 'calc') return;
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const onButton = event.target && event.target.closest ? event.target.closest('button') : null;
+  if (onButton) return;
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    doEquals();
+    return;
+  }
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    clearAll();
+    return;
+  }
+  if (event.key === ' ' || event.key === 'Tab') return;
+  if (event.key.length === 1 && /[0-9 +\-*/^().%,a-zA-Zπ!]/.test(event.key)) {
+    event.preventDefault();
+    insert(event.key);
+  }
+});
+
+kbdToggle.addEventListener('click', function () {
+  setKeyboardMode(!state.keyboard);
+});
+
+exprInput.addEventListener('click', function () {
+  if (!state.keyboard) setStatus('Pulsa el icono de teclado para escribir');
+});
+
+angleButtons.forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    angleMode = btn.dataset.angle;
+    syncAngleButtons();
+    updateResult();
+    saveState();
+  });
+});
+
+document.querySelectorAll('[data-mem]').forEach(function (btn) {
+  btn.addEventListener('click', function () { handleMemory(btn.dataset.mem); });
+});
+
+histClear.addEventListener('click', function () {
+  state.history = [];
+  renderHistory();
+  saveState();
+});
+
+tabButtons.forEach(function (btn) {
+  btn.addEventListener('click', function () { setTab(btn.dataset.tab); });
+});
+
+fxAmount.addEventListener('input', function () {
+  state.fx.amount = fxAmount.value;
+  renderFx();
+  saveState();
+});
+
+fxRate.addEventListener('input', function () {
+  const fx = state.fx;
+  const value = parseMoneyText(fxRate.value);
+  fx.rate = Number.isNaN(value) ? 0 : value;
+  fx.source = 'manual';
+  fx.rateDate = fx.date;
+  fx.fetchedAt = Date.now();
+  fx.error = '';
+  if (fx.rate > 0) {
+    fx.cache[fx.date] = { rate: fx.rate, published: fx.date, source: 'manual', fetchedAt: fx.fetchedAt };
+    pruneRateCache();
+  } else {
+    delete fx.cache[fx.date];
+  }
+  renderFx();
+  saveState();
+});
+
+fxRate.addEventListener('blur', function () { renderFx(); });
+
+fxSwap.addEventListener('click', function () {
+  state.fx.dir = state.fx.dir === 'usd2ves' ? 'ves2usd' : 'usd2ves';
+  renderFx();
+  saveState();
+});
+
+fxRefresh.addEventListener('click', function () { fetchForDate(state.fx.date); });
+
+fxUseSource.addEventListener('click', function () {
+  insertConversion(parseMoneyText(fxAmount.value));
+});
+
+fxUseResult.addEventListener('click', function () {
+  const amount = parseMoneyText(fxAmount.value);
+  if (!(state.fx.rate > 0) || Number.isNaN(amount)) return;
+  insertConversion(state.fx.dir === 'usd2ves' ? amount * state.fx.rate : amount / state.fx.rate);
+});
+
+fxDate.addEventListener('change', function () { selectDate(fxDate.value); });
+
+fxToday.addEventListener('click', function () { selectDate(todayISO()); });
+
+displayEl.addEventListener('animationend', function () {
+  displayEl.classList.remove('shake');
+});
+
+loadState();
+buildKeys();
+renderKeys();
+renderHistory();
+syncAngleButtons();
+updateMem();
+render();
+setKeyboardMode(false);
+fxAmount.value = state.fx.amount;
+fxDate.min = RATE_MIN_DATE;
+fxDate.max = todayISO();
+fxDate.value = state.fx.date;
+renderFx();
+setTab('calc');
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () { /* sin soporte */ });
+  });
+}
+</script>
+</body>
+</html>
