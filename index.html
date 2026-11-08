@@ -1056,7 +1056,7 @@ function updateResult() {
         text = fmt(evaluate(state.expr));
         preview = true;
       } catch (_) {
-        text = state.ansText;
+        text = resultEl.textContent || '0';
       }
     }
   }
@@ -1073,12 +1073,14 @@ function insert(text) {
   if (!text) return;
   if (state.lastWasEval) {
     const startsValue = /^[(0-9.a-zA-Zπ]/.test(text);
-    if (!startsValue) {
-      setStatus('Para usar el resultado anterior, pulsa Ans');
-      return;
+    if (startsValue) {
+      state.expr = '';
+      state.caret = 0;
+    } else {
+      state.expr = 'Ans';
+      state.caret = 3;
     }
-    state.expr = '';
-    state.caret = 0;
+    state.lastWasEval = false;
   }
   const caret = state.keyboard
     ? Math.min(Math.max(state.caret, 0), state.expr.length)
