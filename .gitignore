@@ -1,0 +1,29 @@
+# Artefactos de build
+build/
+.gradle/
+*.class
+*.jar
+
+# Archivos de Gradle (scaffolding local, no pertenece a la app web)
+gradle/
+gradlew
+gradlew.bat
+settings.gradle
+build.gradle
+
+# Capturas y adjuntos de depuración
+attachments/
+screenshots/
+*.jpg
+*.jpeg
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Entorno
+.env
+.env.local
