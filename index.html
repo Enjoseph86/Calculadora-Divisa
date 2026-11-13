@@ -1,160 +1,444 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+  /* Aplica la vista minimalista antes del primer pintado (evita parpadeos) */
+  try {
+    if (localStorage.getItem('minimalMode') === 'true') {
+      document.documentElement.setAttribute('data-minimal', 'true');
+    }
+  } catch (e) { /* almacenamiento no disponible */ }
+</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Calculadora científica</title>
+<title>Calculadora Pro</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#070a12" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Calculadora" />
+<meta name="apple-mobile-web-app-title" content="Calculadora Pro" />
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <style>
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
+
+  /* ===== Theme Variables ===== */
   :root {
+    /* Dark theme (default) */
     --bg: #070a12;
-    --stroke: rgba(255, 255, 255, .09);
+    --bg-elevated: #0c1220;
+    --bg-surface: #0f1726;
+    --stroke: rgba(255, 255, 255, .08);
+    --stroke-strong: rgba(255, 255, 255, .14);
     --text: #eef2ff;
-    --muted: #8b95b0;
+    --text-muted: #94a3b8;
+    --text-subtle: #64748b;
     --accent: #6ee7b7;
+    --accent-strong: #34d399;
+    --accent-bg: rgba(110, 231, 183, .12);
+    --accent-border: rgba(110, 231, 183, .22);
+    --accent-hover: rgba(110, 231, 183, .2);
+    --accent-text: #04231c;
     --danger: #fb7185;
-    --shadow: 0 24px 60px rgba(0, 0, 0, .45);
+    --danger-bg: rgba(251, 113, 133, .12);
+    --danger-border: rgba(251, 113, 133, .2);
+    --danger-text: #fecdd3;
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, .12);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, .25);
+    --shadow: 0 12px 40px rgba(0, 0, 0, .4);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, .45);
+    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -20px 44px rgba(0, 0, 0, .35);
+    --radius-sm: 10px;
+    --radius: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --transition: 120ms ease;
+    --transition-slow: 200ms ease;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --focus-ring: 0 0 0 2px var(--accent);
   }
+
+  /* Light theme */
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f8fafc;
+      --bg-elevated: #ffffff;
+      --bg-surface: #f1f5f9;
+      --stroke: rgba(15, 23, 42, .08);
+      --stroke-strong: rgba(15, 23, 42, .14);
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-subtle: #94a3b8;
+      --accent: #059669;
+      --accent-strong: #10b981;
+      --accent-bg: rgba(5, 150, 105, .12);
+      --accent-border: rgba(5, 150, 105, .22);
+      --accent-hover: rgba(5, 150, 105, .18);
+      --accent-text: #f0fdf4;
+      --danger: #dc2626;
+      --danger-bg: rgba(220, 38, 38, .12);
+      --danger-border: rgba(220, 38, 38, .2);
+      --danger-text: #7f1d1d;
+      --warning: #d97706;
+      --warning-bg: rgba(217, 119, 6, .12);
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, .08);
+      --shadow: 0 12px 40px rgba(15, 23, 42, .1);
+      --shadow-lg: 0 24px 60px rgba(15, 23, 42, .12);
+      --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 -20px 44px rgba(15, 23, 42, .05);
+      --focus-ring: 0 0 0 2px var(--accent);
+    }
+  }
+
+  /* Forced dark/light via data-theme attribute (for manual toggle) */
+  html[data-theme="dark"] {
+    --bg: #070a12;
+    --bg-elevated: #0c1220;
+    --bg-surface: #0f1726;
+    --stroke: rgba(255, 255, 255, .08);
+    --stroke-strong: rgba(255, 255, 255, .14);
+    --text: #eef2ff;
+    --text-muted: #94a3b8;
+    --text-subtle: #64748b;
+    --accent: #6ee7b7;
+    --accent-strong: #34d399;
+    --accent-bg: rgba(110, 231, 183, .12);
+    --accent-border: rgba(110, 231, 183, .22);
+    --accent-hover: rgba(110, 231, 183, .2);
+    --accent-text: #04231c;
+    --danger: #fb7185;
+    --danger-bg: rgba(251, 113, 133, .12);
+    --danger-border: rgba(251, 113, 133, .2);
+    --danger-text: #fecdd3;
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, .12);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, .25);
+    --shadow: 0 12px 40px rgba(0, 0, 0, .4);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, .45);
+    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -20px 44px rgba(0, 0, 0, .35);
+    --focus-ring: 0 0 0 2px var(--accent);
+  }
+
+  html[data-theme="light"] {
+    --bg: #f8fafc;
+    --bg-elevated: #ffffff;
+    --bg-surface: #f1f5f9;
+    --stroke: rgba(15, 23, 42, .08);
+    --stroke-strong: rgba(15, 23, 42, .14);
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --text-subtle: #94a3b8;
+    --accent: #059669;
+    --accent-strong: #10b981;
+    --accent-bg: rgba(5, 150, 105, .12);
+    --accent-border: rgba(5, 150, 105, .22);
+    --accent-hover: rgba(5, 150, 105, .18);
+    --accent-text: #f0fdf4;
+    --danger: #dc2626;
+    --danger-bg: rgba(220, 38, 38, .12);
+    --danger-border: rgba(220, 38, 38, .2);
+    --danger-text: #7f1d1d;
+    --warning: #d97706;
+    --warning-bg: rgba(217, 119, 6, .12);
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, .08);
+    --shadow: 0 12px 40px rgba(15, 23, 42, .1);
+    --shadow-lg: 0 24px 60px rgba(15, 23, 42, .12);
+    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 -20px 44px rgba(15, 23, 42, .05);
+    --focus-ring: 0 0 0 2px var(--accent);
+  }
+
   html, body { height: 100%; }
   body {
     margin: 0;
     min-height: 100%;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 26px 18px;
-    background:
-      radial-gradient(1000px 620px at 12% -10%, #182441 0%, transparent 62%),
-      radial-gradient(820px 520px at 105% 108%, #0d2f2b 0%, transparent 58%),
-      var(--bg);
+    padding: 24px 16px;
+    background: var(--bg);
     color: var(--text);
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     touch-action: manipulation;
+    transition: background var(--transition-slow), color var(--transition-slow);
   }
+
+  /* Subtle background pattern */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 0%, var(--accent-bg) 0%, transparent 50%),
+      radial-gradient(circle at 80% 100%, var(--accent-bg) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.6;
+  }
+
+  @media (prefers-color-scheme: light) {
+    body::before {
+      background-image:
+        radial-gradient(circle at 20% 0%, var(--accent-bg) 0%, transparent 50%),
+        radial-gradient(circle at 80% 100%, var(--accent-bg) 0%, transparent 40%);
+    }
+  }
+
   .wrap {
     display: grid;
-    grid-template-columns: minmax(0, 384px) minmax(0, 288px);
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
     align-items: start;
     width: 100%;
-    max-width: 720px;
+    max-width: 1100px;
+    margin: 0 auto;
   }
-  .calc, .hist {
-    background: linear-gradient(180deg, rgba(255, 255, 255, .065), rgba(255, 255, 255, .018));
-    border: 1px solid var(--stroke);
-    border-radius: 24px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-  .calc { padding: 16px 16px 14px; }
 
-  .head { display: flex; flex-direction: column; gap: 10px; }
-  .brand { display: flex; align-items: center; gap: 8px; }
-  .dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 12px var(--accent);
-    flex: none;
+  @media (min-width: 780px) {
+    .wrap {
+      grid-template-columns: minmax(0, 2.8fr) minmax(0, 1.2fr);
+    }
   }
+
+  .panel {
+    background: linear-gradient(180deg, var(--bg-elevated), var(--bg-surface));
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition-slow);
+  }
+
+  .panel:hover {
+    border-color: var(--stroke-strong);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .calc { padding: 12px 16px 10px; }
+  .hist { padding: 16px; display: flex; flex-direction: column; gap: 10px; max-height: 600px; }
+
+  /* ===== Header / Toolbar ===== */
+  .head { display: flex; flex-direction: column; gap: 4px; position: relative; }
+
+  /* Top bar: buttons above tabs */
+  .head-topbar { display: flex; justify-content: space-between; align-items: center; padding: 2px 0 4px; }
+  .head-topbar-left { display: flex; gap: 8px; }
+  .head-topbar-right { display: flex; gap: 8px; }
+
+  .brand { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 16px var(--accent);
+    flex: none;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
   .brand h1 {
     margin: 0;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
-    letter-spacing: .16em;
+    letter-spacing: .18em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--text-muted);
   }
-  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+  /* Install banner */
+  .install-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-slow), transform var(--transition-slow), visibility var(--transition-slow);
+    max-width: 90vw;
+  }
+  .install-banner.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+  .install-banner-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .install-banner-text strong { color: var(--accent); }
+  .install-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .install-banner-btn {
+    appearance: none;
+    border: 1px solid var(--accent-border);
+    background: var(--accent-bg);
+    color: var(--accent);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+  }
+  .install-banner-btn:hover { background: var(--accent-hover); border-color: var(--accent); color: var(--accent-strong); }
+  .install-banner-btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  .install-banner-btn.secondary {
+    background: var(--bg-surface);
+    border-color: var(--stroke);
+    color: var(--text-muted);
+  }
+  .install-banner-btn.secondary:hover { background: var(--stroke); border-color: var(--stroke-strong); color: var(--text); }
+  .install-banner-close {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--text-subtle);
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition), color var(--transition);
+  }
+  .install-banner-close:hover { background: var(--stroke); color: var(--text); }
+  .install-banner-close:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  .install-banner-close svg { width: 16px; height: 16px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   .seg {
     display: inline-flex;
     padding: 3px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, .05);
+    background: var(--bg-surface);
     border: 1px solid var(--stroke);
   }
   .seg button {
     appearance: none;
     border: 0;
     background: transparent;
-    color: var(--muted);
+    color: var(--text-muted);
     font: inherit;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: .06em;
-    padding: 5px 11px;
+    padding: 6px 12px;
     border-radius: 999px;
     cursor: pointer;
-    transition: background .15s, color .15s;
+    transition: background var(--transition), color var(--transition), box-shadow var(--transition);
   }
-  .seg button[aria-pressed="true"] { background: var(--accent); color: #052e26; }
-  .mem { display: inline-flex; gap: 4px; }
+  .seg button:hover { color: var(--text); background: var(--stroke); }
+  .seg button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--accent-text);
+    box-shadow: 0 2px 8px var(--accent-border);
+  }
+  .seg button:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+
+  .mem { display: inline-flex; gap: 5px; }
   .chip {
     appearance: none;
     border: 1px solid transparent;
-    background: rgba(255, 255, 255, .045);
-    color: #c3cce3;
+    background: var(--bg-surface);
+    color: var(--text-muted);
     font: inherit;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: .03em;
-    padding: 6px 8px;
+    padding: 6px 10px;
     border-radius: 9px;
     cursor: pointer;
-    transition: background .15s, color .15s, border-color .15s;
+    transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
   }
-  .chip:hover { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .14); color: #fff; }
-  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .chip:hover { background: var(--stroke); border-color: var(--stroke-strong); color: var(--text); transform: translateY(-1px); }
+  .chip:active { transform: translateY(0); }
+  .chip:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
   .chip.on {
-    background: rgba(110, 231, 183, .2);
-    border-color: rgba(110, 231, 183, .45);
-    color: #d1fae5;
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
   }
   .chip svg { display: block; }
   .mem-ind {
     margin-left: auto;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 800;
     letter-spacing: .08em;
     color: var(--accent);
-    border: 1px solid rgba(110, 231, 183, .35);
-    background: rgba(110, 231, 183, .12);
-    padding: 3px 8px;
+    border: 1px solid var(--accent-border);
+    background: var(--accent-bg);
+    padding: 3px 10px;
     border-radius: 8px;
+    animation: fadeIn .2s ease;
   }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
 
-  .display {
-    margin: 14px 0 12px;
-    padding: 12px 14px 8px;
-    border-radius: 18px;
-    background: rgba(3, 7, 15, .62);
-    border: 1px solid rgba(255, 255, 255, .07);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -20px 44px rgba(0, 0, 0, .38);
+  /* Theme toggle button */
+  .theme-toggle {
+    appearance: none;
+    border: 1px solid var(--stroke);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+    margin-left: auto;
   }
-  .display.shake { animation: shake .32s ease; }
+  .theme-toggle:hover { background: var(--stroke); border-color: var(--stroke-strong); color: var(--text); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.98); }
+  .theme-toggle:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  .theme-toggle svg { width: 18px; height: 18px; display: block; }
+
+  /* ===== Display ===== */
+  .display {
+    margin: 16px 0 16px;
+    padding: 18px 20px 14px;
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    border: 1px solid var(--stroke);
+    box-shadow: var(--shadow-inset);
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition-slow);
+  }
+  .display:focus-within { border-color: var(--accent-border); box-shadow: var(--shadow-inset), var(--focus-ring); }
+  .display.shake { animation: shake .35s ease; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+    20% { transform: translateX(-6px); }
+    60% { transform: translateX(6px); }
   }
   .expr {
     display: block;
     width: 100%;
     border: 0;
     background: transparent;
-    color: #aab4cd;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 14.5px;
+    color: var(--text-subtle);
+    font-family: var(--font-mono);
+    font-size: 14px;
     line-height: 1.5;
     text-align: right;
     padding: 2px 0;
@@ -163,144 +447,160 @@
     overflow-x: auto;
     white-space: nowrap;
   }
-  .expr::placeholder { color: rgba(139, 149, 176, .55); }
+  .expr::placeholder { color: var(--text-subtle); opacity: 0.6; }
   .expr[readonly] { cursor: text; }
   .result-row {
     display: flex;
     align-items: baseline;
     justify-content: flex-end;
-    gap: 8px;
-    margin-top: 2px;
+    gap: 10px;
+    margin-top: 4px;
   }
-  .eq { color: rgba(255, 255, 255, .22); font-size: 17px; }
+  .eq { color: var(--text-subtle); font-size: 16px; opacity: 0.5; }
   .result {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: clamp(26px, 6.6vw, 36px);
+    font-family: var(--font-mono);
+    font-size: clamp(28px, 7vw, 38px);
     font-weight: 600;
-    letter-spacing: -.015em;
-    line-height: 1.15;
+    letter-spacing: -.02em;
+    line-height: 1.1;
     text-align: right;
-    color: #fff;
+    color: var(--text);
     overflow-wrap: anywhere;
     transition: opacity .12s, color .12s;
   }
-  .result.is-preview { color: #cdd7ee; opacity: .88; }
+  .result.is-preview { color: var(--text-muted); opacity: .8; }
   .status {
     margin: 0;
-    min-height: 15px;
-    font-size: 11.5px;
-    line-height: 1.35;
+    min-height: 16px;
+    font-size: 11px;
+    line-height: 1.4;
     text-align: right;
-    color: var(--muted);
+    color: var(--text-muted);
   }
   .status.error { color: var(--danger); }
 
-  .keys { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 7px; }
+  /* ===== Keys ===== */
+  .keys { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .keys.std { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
   .key {
     appearance: none;
-    border: 1px solid rgba(255, 255, 255, .07);
-    background: rgba(255, 255, 255, .045);
+    border: 1px solid var(--stroke);
+    background: var(--bg-surface);
     color: var(--text);
     font: inherit;
     font-size: 15px;
     font-weight: 500;
-    min-height: 50px;
-    padding: 2px;
-    border-radius: 14px;
+    min-height: 52px;
+    padding: 4px;
+    border-radius: var(--radius);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    transition: background .12s, border-color .12s, transform .06s, color .12s;
+    transition: background var(--transition), border-color var(--transition), transform .05s, color var(--transition), box-shadow var(--transition);
   }
-  .key:hover { background: rgba(255, 255, 255, .085); border-color: rgba(255, 255, 255, .14); }
-  .key:active { transform: translateY(1px) scale(.985); }
-  .key:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .key.fn { background: rgba(255, 255, 255, .028); color: #c9d3ea; font-size: 13.5px; }
-  .key.num { background: rgba(255, 255, 255, .065); font-size: 17px; font-weight: 600; }
-  .key.op { background: rgba(110, 231, 183, .1); border-color: rgba(110, 231, 183, .17); color: #a7f3d0; font-size: 18px; }
-  .key.op:hover { background: rgba(110, 231, 183, .17); }
-  .key.danger { color: #fecdd3; background: rgba(251, 113, 133, .12); border-color: rgba(251, 113, 133, .2); }
-  .key.danger:hover { background: rgba(251, 113, 133, .2); }
+  .keys.std .key { min-height: 72px; font-size: 20px; }
+  .keys.std .key.num { font-size: 26px; font-weight: 700; }
+  .keys.std .key.op { font-size: 28px; }
+  .keys.std .key.fn { font-size: 18px; }
+  .keys.std .key.eq { font-size: 32px; }
+  .key:hover { background: var(--stroke); border-color: var(--stroke-strong); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .key:active { transform: translateY(0) scale(.985); box-shadow: none; }
+  .key:focus-visible { outline: var(--focus-ring); outline-offset: 2px; z-index: 1; }
+  .key .k { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+  .key.fn { background: var(--bg); color: var(--text-muted); font-size: 13px; }
+  .key.fn:hover { background: var(--bg-surface); color: var(--text); }
+  .key.num { background: var(--bg-surface); font-size: 17px; font-weight: 600; }
+  .key.op {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+    font-size: 18px;
+  }
+  .key.op:hover { background: var(--accent-hover); border-color: var(--accent); color: var(--accent-strong); }
+  .key.danger { color: var(--danger-text); background: var(--danger-bg); border-color: var(--danger-border); }
+  .key.danger:hover { background: var(--danger-border); color: var(--danger); }
   .key.accent.on {
-    background: rgba(110, 231, 183, .22);
-    border-color: rgba(110, 231, 183, .5);
-    color: #d1fae5;
+    background: var(--accent-hover);
+    border-color: var(--accent-border);
+    color: var(--accent);
   }
   .key.eq {
     grid-row: span 2;
-    background: linear-gradient(180deg, #86f2c8, #34d399);
+    background: linear-gradient(180deg, var(--accent-strong), var(--accent));
     border-color: transparent;
-    color: #04231c;
-    font-size: 23px;
+    color: var(--accent-text);
+    font-size: 22px;
     font-weight: 700;
-    box-shadow: 0 10px 26px rgba(52, 211, 153, .24);
+    box-shadow: 0 8px 24px var(--accent-border);
   }
-  .key.eq:hover { background: linear-gradient(180deg, #97f8d3, #3fe0aa); }
-  .key sup { font-size: .68em; vertical-align: super; }
-  .key sub { font-size: .68em; vertical-align: sub; }
+  .key.eq:hover { background: linear-gradient(180deg, var(--accent), var(--accent-strong)); transform: translateY(-2px); box-shadow: 0 12px 32px var(--accent-border); }
+  .key.eq:active { transform: translateY(0) scale(.99); }
+  .key sup { font-size: .65em; vertical-align: super; }
+  .key sub { font-size: .65em; vertical-align: sub; }
+
   .hint {
-    margin: 10px 2px 0;
-    font-size: 10.5px;
+    margin: 12px 2px 0;
+    font-size: 10px;
     letter-spacing: .02em;
-    color: rgba(139, 149, 176, .75);
+    color: var(--text-subtle);
     text-align: center;
   }
 
-  .hist {
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 552px;
-  }
-  .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  /* ===== History ===== */
+  .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .hist-head h2 {
     margin: 0;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: .16em;
+    letter-spacing: .18em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--text-muted);
   }
   .hist-count {
     margin-left: auto;
     margin-right: 2px;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: .04em;
     font-variant-numeric: tabular-nums;
-    color: var(--muted);
-    border: 1px solid rgba(255, 255, 255, .08);
-    background: rgba(255, 255, 255, .04);
-    padding: 2px 7px;
+    color: var(--text-muted);
+    border: 1px solid var(--stroke);
+    background: var(--bg-surface);
+    padding: 3px 9px;
     border-radius: 999px;
   }
   .hist-clear {
     appearance: none;
     border: 1px solid transparent;
     background: transparent;
-    color: var(--muted);
+    color: var(--text-muted);
     font: inherit;
-    font-size: 11px;
-    padding: 4px 7px;
+    font-size: 10.5px;
+    padding: 5px 9px;
     border-radius: 8px;
     cursor: pointer;
-    transition: background .15s, color .15s;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
   }
-  .hist-clear:hover { background: rgba(255, 255, 255, .07); color: #fff; }
-  .hist-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .hist-clear:hover { background: var(--stroke); color: var(--text); }
+  .hist-clear:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
   .hist-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     overflow-y: auto;
     flex: 1;
-    min-height: 64px;
+    min-height: 80px;
     scrollbar-width: thin;
+    scrollbar-color: var(--stroke) transparent;
+    padding-right: 4px;
   }
+  .hist-list::-webkit-scrollbar { width: 6px; }
+  .hist-list::-webkit-scrollbar-track { background: transparent; }
+  .hist-list::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 3px; }
   .hist-item {
     appearance: none;
     width: 100%;
@@ -309,46 +609,49 @@
     color: inherit;
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 11px;
-    padding: 7px 9px;
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
     cursor: pointer;
-    transition: background .12s, border-color .12s;
+    transition: background var(--transition), border-color var(--transition), transform var(--transition);
   }
-  .hist-item:hover { background: rgba(255, 255, 255, .055); border-color: rgba(255, 255, 255, .08); }
-  .hist-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .hist-item:hover { background: var(--bg-surface); border-color: var(--stroke); transform: translateX(2px); }
+  .hist-item:active { transform: none; }
+  .hist-item:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
   .h-expr {
     display: block;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 11px;
-    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-subtle);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 2px;
   }
   .h-res {
     display: block;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 13.5px;
-    color: #e8eeff;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .hist-empty {
     margin: 0;
-    padding: 18px 6px;
-    font-size: 12px;
-    line-height: 1.55;
+    padding: 24px 8px;
+    font-size: 11.5px;
+    line-height: 1.6;
     text-align: center;
-    color: var(--muted);
+    color: var(--text-subtle);
   }
 
+  /* ===== Tabs ===== */
   .tabs {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     padding: 3px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, .05);
+    background: var(--bg-surface);
     border: 1px solid var(--stroke);
   }
   .tabs button {
@@ -356,193 +659,719 @@
     appearance: none;
     border: 0;
     background: transparent;
-    color: var(--muted);
+    color: var(--text-muted);
     font: inherit;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: .08em;
     text-transform: uppercase;
-    padding: 7px 8px;
+    padding: 8px 10px;
     border-radius: 9px;
     cursor: pointer;
-    transition: background .15s, color .15s;
+    transition: background var(--transition), color var(--transition), transform var(--transition);
   }
-  .tabs button[aria-selected="true"] { background: rgba(255, 255, 255, .09); color: #fff; }
-  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tabs button:hover { color: var(--text); background: var(--stroke); }
+  .tabs button[aria-selected="true"] { background: var(--bg-elevated); color: var(--text); box-shadow: var(--shadow-sm); }
+  .tabs button:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 
-  .fx { display: flex; flex-direction: column; gap: 12px; padding: 14px 0 2px; }
+  /* ===== FX Converter ===== */
+  .fx { display: flex; flex-direction: column; gap: 14px; padding: 16px 0 4px; }
   .fx-field { display: flex; flex-direction: column; gap: 6px; }
   .fx-label {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--text-muted);
   }
   .fx-label span {
     display: block;
     margin-top: 2px;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     letter-spacing: .01em;
     text-transform: none;
-    color: #dbe4f7;
+    color: var(--text);
   }
   .fx-row { display: flex; gap: 8px; align-items: stretch; }
   .fx-input {
     flex: 1;
     min-width: 0;
-    border: 1px solid rgba(255, 255, 255, .09);
-    background: rgba(3, 7, 15, .62);
-    color: #fff;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    border: 1px solid var(--stroke);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
     font-size: 17px;
     font-weight: 600;
     text-align: right;
-    padding: 10px 12px;
-    border-radius: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius);
     outline: none;
-    transition: border-color .15s, background .15s;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
   }
-  .fx-input:focus { border-color: rgba(110, 231, 183, .55); background: rgba(3, 7, 15, .85); }
-  .fx-input::placeholder { color: rgba(139, 149, 176, .5); }
+  .fx-input:hover { border-color: var(--stroke-strong); }
+  .fx-input:focus { border-color: var(--accent); background: var(--bg-elevated); box-shadow: var(--focus-ring); }
+  .fx-input::placeholder { color: var(--text-subtle); opacity: 0.6; }
   .fx-date {
     flex: 1;
     min-width: 0;
-    border: 1px solid rgba(255, 255, 255, .09);
-    background: rgba(3, 7, 15, .62);
-    color: #fff;
+    border: 1px solid var(--stroke);
+    background: var(--bg);
+    color: var(--text);
     font: inherit;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
-    padding: 9px 11px;
-    border-radius: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
     outline: none;
-    color-scheme: dark;
-    transition: border-color .15s, background .15s;
+    color-scheme: inherit;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
   }
-  .fx-date:focus { border-color: rgba(110, 231, 183, .55); background: rgba(3, 7, 15, .85); }
+  .fx-date:hover { border-color: var(--stroke-strong); }
+  .fx-date:focus { border-color: var(--accent); background: var(--bg-elevated); box-shadow: var(--focus-ring); }
   .fx-btn {
     appearance: none;
-    border: 1px solid rgba(110, 231, 183, .22);
-    background: rgba(110, 231, 183, .12);
-    color: #a7f3d0;
+    border: 1px solid var(--accent-border);
+    background: var(--accent-bg);
+    color: var(--accent);
     font: inherit;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: .06em;
     text-transform: uppercase;
-    padding: 0 13px;
-    border-radius: 12px;
+    padding: 0 14px;
+    height: 42px;
+    border-radius: var(--radius);
     cursor: pointer;
-    transition: background .15s, border-color .15s;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+    white-space: nowrap;
   }
-  .fx-btn:hover { background: rgba(110, 231, 183, .2); }
-  .fx-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .fx-btn[disabled] { opacity: .6; cursor: progress; }
-  .fx-swap { flex: none; width: 46px; padding: 0; font-size: 16px; letter-spacing: 0; }
+  .fx-btn:hover { background: var(--accent-hover); border-color: var(--accent); color: var(--accent-strong); transform: translateY(-1px); }
+  .fx-btn:active { transform: translateY(0); }
+  .fx-btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  .fx-btn[disabled] { opacity: .5; cursor: progress; transform: none; }
+  .fx-swap { flex: none; width: 42px; height: 42px; padding: 0; font-size: 18px; letter-spacing: 0; border-radius: var(--radius); background: var(--bg-surface); border-color: var(--stroke); color: var(--text-muted); }
+  .fx-swap:hover { background: var(--stroke); border-color: var(--stroke-strong); color: var(--text); }
   .fx-out {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    padding: 11px 14px 12px;
-    border-radius: 16px;
-    background: rgba(3, 7, 15, .62);
-    border: 1px solid rgba(255, 255, 255, .07);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), inset 0 -18px 40px rgba(0, 0, 0, .3);
+    gap: 4px;
+    padding: 14px 16px 15px;
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    border: 1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), inset 0 -16px 36px rgba(0,0,0,.25);
     text-align: right;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition-slow);
   }
   .fx-out-label {
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: .12em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--text-subtle);
   }
   .fx-result {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: clamp(24px, 6.4vw, 32px);
+    font-family: var(--font-mono);
+    font-size: clamp(26px, 6.8vw, 34px);
     font-weight: 600;
-    letter-spacing: -.015em;
-    line-height: 1.2;
-    color: #fff;
+    letter-spacing: -.02em;
+    line-height: 1.15;
+    color: var(--text);
     overflow-wrap: anywhere;
   }
   .fx-detail {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 11px;
-    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-muted);
     overflow-wrap: anywhere;
+    line-height: 1.5;
   }
-  .fx-actions { display: flex; flex-direction: column; gap: 6px; }
+  .fx-actions { display: flex; flex-direction: column; gap: 7px; }
   .fx-actions-label {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--text-subtle);
   }
-  .fx-chips { display: flex; gap: 6px; }
+  .fx-chips { display: flex; gap: 7px; }
   .fx-chip {
     flex: 1;
     min-width: 0;
     appearance: none;
-    border: 1px solid rgba(255, 255, 255, .1);
-    background: rgba(255, 255, 255, .045);
-    color: #dbe4f7;
+    border: 1px solid var(--stroke);
+    background: var(--bg-surface);
+    color: var(--text);
     font: inherit;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 600;
-    padding: 8px 6px;
+    padding: 10px 8px;
     border-radius: 10px;
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: background .15s, border-color .15s, color .15s;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
   }
-  .fx-chip:hover:enabled {
-    background: rgba(110, 231, 183, .14);
-    border-color: rgba(110, 231, 183, .3);
-    color: #d1fae5;
-  }
-  .fx-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .fx-chip:disabled { opacity: .45; cursor: default; }
+  .fx-chip:hover:enabled { background: var(--accent-bg); border-color: var(--accent-border); color: var(--accent); transform: translateY(-1px); }
+  .fx-chip:active:enabled { transform: none; }
+  .fx-chip:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  .fx-chip:disabled { opacity: .4; cursor: default; }
   .fx-meta {
     margin: 0;
-    font-size: 11px;
-    line-height: 1.45;
-    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.5;
+    color: var(--text-muted);
     text-align: right;
   }
   .fx-meta.error { color: var(--danger); }
 
-  @media (max-width: 760px) {
-    body { padding: 16px 12px 24px; align-items: flex-start; }
-    .wrap { grid-template-columns: minmax(0, 1fr); max-width: 440px; margin: 0 auto; }
-    .hist { max-height: 220px; }
-    .key { min-height: 46px; }
+  /* ===== Units Converter ===== */
+  .units { display: flex; flex-direction: column; gap: 14px; padding: 16px 0 4px; }
+  .units-field { display: flex; flex-direction: column; gap: 6px; }
+  .units-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
   }
-  @media (max-width: 380px) {
-    .key { min-height: 43px; font-size: 14px; }
+  .units-label span {
+    display: inline;
+    margin-left: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    text-transform: none;
+    color: var(--text);
+  }
+  .units-row { display: flex; gap: 8px; align-items: stretch; }
+  .units-select {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--stroke);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    outline: none;
+    color-scheme: inherit;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+  }
+  .units-select:hover { border-color: var(--stroke-strong); }
+  .units-select:focus { border-color: var(--accent); background: var(--bg-elevated); box-shadow: var(--focus-ring); }
+  .units-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--stroke);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 17px;
+    font-weight: 600;
+    text-align: right;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    outline: none;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+  }
+  .units-input:hover { border-color: var(--stroke-strong); }
+  .units-input:focus { border-color: var(--accent); background: var(--bg-elevated); box-shadow: var(--focus-ring); }
+  .units-input::placeholder { color: var(--text-subtle); opacity: 0.6; }
+  .units-btn {
+    appearance: none;
+    border: 1px solid var(--accent-border);
+    background: var(--accent-bg);
+    color: var(--accent);
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 0 14px;
+    height: 42px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+    white-space: nowrap;
+  }
+  .units-btn:hover { background: var(--accent-hover); border-color: var(--accent); color: var(--accent-strong); transform: translateY(-1px); }
+  .units-btn:active { transform: translateY(0); }
+  .units-btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  .units-btn[disabled] { opacity: .5; cursor: progress; transform: none; }
+  .units-swap { flex: none; width: 42px; height: 42px; padding: 0; font-size: 18px; letter-spacing: 0; border-radius: var(--radius); background: var(--bg-surface); border-color: var(--stroke); color: var(--text-muted); }
+  .units-swap:hover { background: var(--stroke); border-color: var(--stroke-strong); color: var(--text); }
+  .units-out {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px 15px;
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    border: 1px solid var(--stroke);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), inset 0 -16px 36px rgba(0,0,0,.25);
+    text-align: right;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition-slow);
+  }
+  .units-out-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  .units-result {
+    font-family: var(--font-mono);
+    font-size: clamp(26px, 6.8vw, 34px);
+    font-weight: 600;
+    letter-spacing: -.02em;
+    line-height: 1.15;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .units-detail {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+  }
+  .units-actions { display: flex; flex-direction: column; gap: 7px; }
+  .units-actions-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  .units-chips { display: flex; gap: 7px; }
+  .units-chip {
+    flex: 1;
+    min-width: 0;
+    appearance: none;
+    border: 1px solid var(--stroke);
+    background: var(--bg-surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 10px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+  }
+  .units-chip:hover:enabled { background: var(--accent-bg); border-color: var(--accent-border); color: var(--accent); transform: translateY(-1px); }
+  .units-chip:active:enabled { transform: none; }
+  .units-chip:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  .units-chip:disabled { opacity: .4; cursor: default; }
+  .units-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .units-quick-btn {
+    appearance: none;
+    border: 1px solid var(--stroke);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+  }
+  .units-quick-btn:hover { background: var(--accent-bg); border-color: var(--accent-border); color: var(--accent); transform: translateY(-1px); }
+  .units-quick-btn:active { transform: none; }
+  .units-quick-btn:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+
+  /* ===== Minimal Mode ===== */
+  html[data-minimal="true"] body {
+    padding: 12px 10px 20px;
+  }
+  html[data-minimal="true"] body::before { display: none; }
+  html[data-minimal="true"] .wrap {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 430px;
+    gap: 12px;
+  }
+  html[data-minimal="true"] .panel {
+    background: var(--bg-elevated);
+    border-radius: 16px;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  html[data-minimal="true"] .panel:hover {
+    border-color: var(--stroke);
+    box-shadow: none;
+  }
+  html[data-minimal="true"] .calc { padding: 10px 12px 8px; }
+  html[data-minimal="true"] .head { gap: 6px; }
+  html[data-minimal="true"] .tabs {
+    background: transparent;
+    border-color: transparent;
+    padding: 0;
+    gap: 4px;
+  }
+  html[data-minimal="true"] .tabs button { padding: 7px 8px; }
+  html[data-minimal="true"] .tabs button[aria-selected="true"] {
+    background: var(--accent-bg);
+    color: var(--accent);
+    box-shadow: none;
+  }
+  html[data-minimal="true"] .display {
+    margin: 10px 0;
+    padding: 12px 14px 10px;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+  html[data-minimal="true"] .result { font-size: clamp(26px, 8vw, 34px); }
+  html[data-minimal="true"] .hint { display: none; }
+  html[data-minimal="true"] .toolbar { gap: 8px; }
+  html[data-minimal="true"] .seg { background: transparent; }
+  html[data-minimal="true"] .seg button[aria-pressed="true"] {
+    background: var(--accent-bg);
+    color: var(--accent);
+    box-shadow: none;
+  }
+  html[data-minimal="true"] .mem,
+  html[data-minimal="true"] #kbdToggle,
+  html[data-minimal="true"] #memInd { display: none; }
+  html[data-minimal="true"] .hist { display: none; }
+  html[data-minimal="true"] body.hist-open .hist {
+    display: flex;
+    max-height: 320px;
+  }
+  html[data-minimal="true"] .fx-advanced,
+  html[data-minimal="true"] .units-advanced { display: none; }
+  html[data-minimal="true"] .fx-actions-label,
+  html[data-minimal="true"] .units-actions-label { display: none; }
+  html[data-minimal="true"] .fx-actions .fx-chip:not(#fxReset),
+  html[data-minimal="true"] .units-actions .units-chip:not(#unitsReset) { display: none; }
+  html[data-minimal="true"] .fx-out,
+  html[data-minimal="true"] .units-out { box-shadow: none; }
+  html[data-minimal="true"] .install-banner { display: none !important; }
+  #histToggle { display: none; }
+  html[data-minimal="true"] #histToggle { display: inline-flex; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 780px) {
+    body { padding: 16px 12px 24px; }
+    .wrap { grid-template-columns: minmax(0, 1fr); max-width: 460px; margin: 0 auto; }
+    .hist { max-height: 260px; }
+    .key { min-height: 48px; }
+    .fx { padding: 12px 0 2px; }
+  }
+  @media (max-width: 400px) {
+    .key { min-height: 44px; font-size: 14px; }
     .key.num { font-size: 15.5px; }
-    .key.op { font-size: 16.5px; }
+    .key.op { font-size: 16px; }
+    .fx-input { font-size: 16px; padding: 10px 12px; }
+    .fx-result { font-size: clamp(24px, 7vw, 30px); }
+  }
+  @media (max-width: 340px) {
+    .wrap { gap: 14px; }
+    .key { min-height: 40px; font-size: 13px; }
+    .key.num { font-size: 14.5px; }
+    .fx-chip { font-size: 10px; padding: 8px 6px; }
+  }
+
+  /* ===== Reduced Motion ===== */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ===== High Contrast ===== */
+  @media (prefers-contrast: high) {
+    :root {
+      --stroke: currentColor;
+      --stroke-strong: currentColor;
+    }
+    .key, .fx-input, .fx-date, .fx-btn, .fx-chip, .chip, .seg button {
+      border-width: 2px;
+    }
+  }
+
+  /* ===== Help Modal ===== */
+  .help-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-slow), visibility var(--transition-slow);
+  }
+  .help-modal.open {
+    opacity: 1;
+    visibility: visible;
+  }
+  .help-modal-content {
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: 24px;
+    transform: translateY(20px) scale(0.95);
+    transition: transform var(--transition-slow);
+  }
+  .help-modal.open .help-modal-content {
+    transform: translateY(0) scale(1);
+  }
+  .help-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--stroke);
+  }
+  .help-modal-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .help-modal-close {
+    appearance: none;
+    border: 1px solid var(--stroke);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+  }
+  .help-modal-close:hover { background: var(--stroke); border-color: var(--stroke-strong); color: var(--text); }
+  .help-modal-close:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+  .help-modal-close svg { width: 20px; height: 20px; }
+  
+  .help-section {
+    margin-bottom: 20px;
+  }
+  .help-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .help-section-title svg { width: 16px; height: 16px; color: var(--accent); flex: none; }
+  
+  .help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .help-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius);
+  }
+  .help-item-key {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .help-item-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  
+  .help-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .help-list li { margin-bottom: 6px; }
+  .help-list strong { color: var(--accent); }
+  
+  .help-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+  }
+  .help-table th,
+  .help-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--stroke);
+  }
+  .help-table th {
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-size: 9.5px;
+  }
+  .help-table td { color: var(--text); }
+  .help-table tr:last-child td { border-bottom: none; }
+  .help-table code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--bg-surface);
+    border: 1px solid var(--stroke);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+  
+  .help-note {
+    font-size: 11px;
+    color: var(--text-subtle);
+    line-height: 1.6;
+    padding: 10px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius);
+    margin-top: 10px;
+  }
+  .help-note strong { color: var(--text); }
+  
+  @media (max-width: 480px) {
+    .help-modal-content { padding: 16px; }
+    .help-grid { grid-template-columns: 1fr; }
+    .help-table th, .help-table td { padding: 6px 8px; font-size: 11px; }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .help-modal, .help-modal-content { transition: none !important; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <main class="calc">
+  <main class="calc panel">
     <div class="head">
-      <div class="brand">
-        <span class="dot" aria-hidden="true"></span>
-        <h1>Calculadora científica</h1>
+      <!-- Top bar: buttons above tabs -->
+      <div class="head-topbar">
+        <div class="head-topbar-left">
+          <button type="button" class="theme-toggle" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema" aria-pressed="false">
+            <!-- Sun icon (shown in dark mode) -->
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <!-- Moon icon (shown in light mode) -->
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <button type="button" class="theme-toggle" id="infoToggle" aria-label="Ayuda e información" title="Ayuda e información" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 16v-4"></path>
+              <path d="M12 8h.01"></path>
+            </svg>
+          </button>
+          <button type="button" class="theme-toggle" id="minimalToggle" aria-label="Activar vista minimalista" title="Activar vista minimalista" aria-pressed="false">
+            <svg class="icon-minimal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+              <path d="M9 3v4a2 2 0 0 1-2 2H3"></path>
+              <path d="M15 3v4a2 2 0 0 0 2 2h4"></path>
+              <path d="M9 21v-4a2 2 0 0 0-2-2H3"></path>
+              <path d="M15 21v-4a2 2 0 0 1 2-2h4"></path>
+            </svg>
+            <svg class="icon-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true" style="display:none;">
+              <path d="M3 8V5a2 2 0 0 1 2-2h3"></path>
+              <path d="M16 3h3a2 2 0 0 1 2 2v3"></path>
+              <path d="M21 16v3a2 2 0 0 1-2 2h-3"></path>
+              <path d="M8 21H5a2 2 0 0 1-2-2v-3"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="head-topbar-right">
+          <button type="button" class="theme-toggle" id="histToggle" aria-label="Ver historial" title="Ver historial" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+              <path d="M3 4v5h5"></path>
+              <path d="M12 7v5l3.5 2"></path>
+            </svg>
+          </button>
+          <button type="button" class="theme-toggle" id="fullscreenToggle" aria-label="Pantalla completa" title="Pantalla completa" aria-pressed="false">
+            <svg class="icon-fullscreen-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+            <svg class="icon-fullscreen-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true" style="display:none;">
+              <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+          </button>
+        </div>
       </div>
+
       <div class="tabs" role="tablist" aria-label="Sección">
-        <button type="button" role="tab" id="tabCalc" aria-selected="true" aria-controls="calcPane" data-tab="calc">Científica</button>
+        <button type="button" role="tab" id="tabCalc" aria-selected="true" aria-controls="calcPane" data-tab="calc">Calcular</button>
         <button type="button" role="tab" id="tabFx" aria-selected="false" aria-controls="fxPane" data-tab="fx">Divisas</button>
+        <button type="button" role="tab" id="tabUnits" aria-selected="false" aria-controls="unitsPane" data-tab="units">Unidades</button>
       </div>
+
+    <div id="calcPane">
+      <section class="display" id="display">
+        <input id="expr" class="expr" type="text" inputmode="none" readonly spellcheck="false"
+               autocomplete="off" autocapitalize="off" placeholder="0" aria-label="Expresión" />
+        <div class="result-row">
+          <span class="eq" aria-hidden="true">=</span>
+          <output id="result" class="result" aria-live="polite">0</output>
+        </div>
+        <p class="status" id="status" role="status"></p>
+      </section>
+
       <div class="toolbar" id="calcToolbar">
+        <div class="seg" role="group" aria-label="Modo calculadora">
+          <button type="button" data-calc-mode="std" aria-pressed="true" title="Calculadora estándar">Estándar</button>
+          <button type="button" data-calc-mode="sci" aria-pressed="false" title="Calculadora científica">Científica</button>
+        </div>
         <div class="seg" role="group" aria-label="Modo angular">
           <button type="button" data-angle="DEG" aria-pressed="true">DEG</button>
           <button type="button" data-angle="RAD" aria-pressed="false">RAD</button>
@@ -563,24 +1392,21 @@
         </button>
         <span class="mem-ind" id="memInd" hidden title="Memoria">M</span>
       </div>
-    </div>
-
-    <div id="calcPane">
-      <section class="display" id="display">
-        <input id="expr" class="expr" type="text" inputmode="none" readonly spellcheck="false"
-               autocomplete="off" autocapitalize="off" placeholder="0" aria-label="Expresión" />
-        <div class="result-row">
-          <span class="eq" aria-hidden="true">=</span>
-          <output id="result" class="result" aria-live="polite">0</output>
-        </div>
-        <p class="status" id="status" role="status"></p>
-      </section>
 
       <div class="keys" id="keys"></div>
       <p class="hint">Toca la expresión para mover el cursor · el icono ⌨ activa el teclado · Enter calcula · Esc borra</p>
     </div>
 
     <section class="fx" id="fxPane" hidden aria-label="Conversor de dólares y bolívares">
+      <div class="fx-field">
+        <label class="fx-label">Modo de conversión</label>
+        <div class="tabs" role="tablist" aria-label="Tipo de conversión" id="fxModeTabs">
+          <button type="button" role="tab" data-fx-mode="usd2ves" aria-selected="true" aria-controls="fxPane">USD → VES</button>
+          <button type="button" role="tab" data-fx-mode="usdt2ves" aria-selected="false" aria-controls="fxPane">USDT (P2P) → VES</button>
+          <button type="button" role="tab" data-fx-mode="usd2usdt" aria-selected="false" aria-controls="fxPane">USD → USDT</button>
+        </div>
+      </div>
+
       <div class="fx-field">
         <label class="fx-label" for="fxAmount">Monto en
           <span id="fxFromLabel">dólares (USD)</span>
@@ -604,10 +1430,11 @@
         <div class="fx-chips">
           <button type="button" class="fx-chip" id="fxUseSource">Usar monto</button>
           <button type="button" class="fx-chip" id="fxUseResult">Usar resultado</button>
+          <button type="button" class="fx-chip" id="fxReset" title="Restablecer a 1 unidad base">Restablecer</button>
         </div>
       </div>
 
-      <div class="fx-field">
+      <div class="fx-field fx-advanced">
         <label class="fx-label" for="fxDate">Fecha de la tasa</label>
         <div class="fx-row">
           <input id="fxDate" class="fx-date" type="date" aria-label="Fecha de la tasa" />
@@ -616,18 +1443,73 @@
       </div>
 
       <div class="fx-field">
-        <label class="fx-label" for="fxRate">Tasa BCV (Bs por dólar)</label>
+        <label class="fx-label" for="fxRate"><span id="fxRateLabel">Tasa BCV (Bs por dólar)</span></label>
         <div class="fx-row">
           <input id="fxRate" class="fx-input" type="text" inputmode="decimal" autocomplete="off"
-                 spellcheck="false" placeholder="0,00" aria-label="Tasa BCV" />
+                 spellcheck="false" placeholder="0,00" aria-label="Tasa de conversión" />
           <button type="button" class="fx-btn" id="fxRefresh">Actualizar</button>
         </div>
       </div>
       <p class="fx-meta" id="fxMeta"></p>
     </section>
+
+    <section class="units" id="unitsPane" hidden aria-label="Conversor de unidades">
+      <div class="units-field">
+        <label class="units-label">Categoría</label>
+        <select id="unitsCategory" class="units-select" aria-label="Categoría de unidades"></select>
+      </div>
+
+      <div class="units-field">
+        <label class="units-label" for="unitsFrom">De
+          <span id="unitsFromUnit"></span>
+        </label>
+        <div class="units-row">
+          <select id="unitsFrom" class="units-select" aria-label="Unidad de origen"></select>
+        </div>
+      </div>
+
+      <div class="units-field">
+        <label class="units-label" for="unitsAmount">Valor</label>
+        <div class="units-row">
+          <input id="unitsAmount" class="units-input" type="text" inputmode="decimal" autocomplete="off"
+                 spellcheck="false" placeholder="1" aria-label="Valor a convertir" />
+        </div>
+      </div>
+
+      <div class="units-field">
+        <label class="units-label" for="unitsTo">A
+          <span id="unitsToUnit"></span>
+        </label>
+        <div class="units-row">
+          <select id="unitsTo" class="units-select" aria-label="Unidad de destino"></select>
+          <button type="button" class="units-btn units-swap" id="unitsSwap" title="Intercambiar unidades"
+                  aria-label="Intercambiar unidades">⇅</button>
+        </div>
+      </div>
+
+      <div class="units-out">
+        <span class="units-out-label" id="unitsOutLabel">Resultado</span>
+        <output class="units-result" id="unitsResult">—</output>
+        <span class="units-detail" id="unitsDetail"></span>
+      </div>
+
+      <div class="units-actions">
+        <span class="units-actions-label">Llevar a la calculadora</span>
+        <div class="units-chips">
+          <button type="button" class="units-chip" id="unitsUseSource">Usar valor</button>
+          <button type="button" class="units-chip" id="unitsUseResult">Usar resultado</button>
+          <button type="button" class="units-chip" id="unitsReset" title="Restablecer a 1 unidad">Restablecer</button>
+        </div>
+      </div>
+
+      <div class="units-field units-advanced">
+        <label class="units-label">Conversiones rápidas</label>
+        <div class="units-quick" id="unitsQuick"></div>
+      </div>
+    </section>
   </main>
 
-  <aside class="hist" aria-label="Historial de cálculos">
+  <aside class="hist panel" aria-label="Historial de cálculos">
     <div class="hist-head">
       <h2>Historial</h2>
       <span class="hist-count" id="histCount" title="Máximo 30 cálculos">0/30</span>
@@ -635,6 +1517,37 @@
     </div>
     <div class="hist-list" id="histList"></div>
   </aside>
+</div>
+
+<!-- Help Modal -->
+<div class="help-modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle" hidden>
+  <div class="help-modal-content">
+    <header class="help-modal-header">
+      <h2 class="help-modal-title" id="helpModalTitle">Ayuda</h2>
+      <button type="button" class="help-modal-close" id="helpModalClose" aria-label="Cerrar ayuda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </header>
+    <div class="help-modal-body" id="helpModalBody"></div>
+  </div>
+</div>
+
+<!-- Install Banner -->
+<div class="install-banner" id="installBanner" role="dialog" aria-label="Instalar aplicación" hidden>
+  <span class="install-banner-text">Instala <strong>Calculadora Pro</strong> para usarla como app nativa, sin barra del navegador y con acceso offline.</span>
+  <div class="install-banner-actions">
+    <button type="button" class="install-banner-btn" id="installBtn">Instalar</button>
+    <button type="button" class="install-banner-btn secondary" id="installDismiss">Luego</button>
+  </div>
+  <button type="button" class="install-banner-close" id="installClose" aria-label="Cerrar banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
 </div>
 
 <script>
@@ -731,50 +1644,70 @@ class Parser {
     for (;;) {
       const t = this.peek();
       if (t && t.type === 'op' && (t.value === '+' || t.value === '-')) {
+        const op = t.value;
         this.take();
-        const rhs = this.parseProduct();
-        value = t.value === '+' ? value + rhs : value - rhs;
+        const rhs = this.parseProduct(false); // don't allow postfix % in RHS
+        // Handle percentage: a + b% = a + a * b/100, a - b% = a - a * b/100
+        if (this.peek() && this.peek().type === 'op' && this.peek().value === '%') {
+          this.take(); // consume %
+          const percentValue = value * rhs / 100;
+          value = op === '+' ? value + percentValue : value - percentValue;
+        } else {
+          value = op === '+' ? value + rhs : value - rhs;
+        }
       } else break;
     }
     return value;
   }
 
-  parseProduct() {
-    let value = this.parseUnary();
+  parseProduct(allowPercent) {
+    let value = this.parseUnary(allowPercent);
     for (;;) {
       const t = this.peek();
       if (!t) break;
       if (t.type === 'op' && (t.value === '*' || t.value === '/')) {
+        const op = t.value;
         this.take();
-        const rhs = this.parseUnary();
-        if (t.value === '*') value = value * rhs;
-        else {
-          if (rhs === 0) throw new CalcError('No se puede dividir entre 0');
-          value = value / rhs;
+        const rhs = this.parseUnary(allowPercent);
+        // Handle percentage: a * b% = a * b/100, a / b% = a / (b/100)
+        if (this.peek() && this.peek().type === 'op' && this.peek().value === '%') {
+          this.take(); // consume %
+          const percentValue = rhs / 100;
+          if (op === '*') value = value * percentValue;
+          else {
+            if (percentValue === 0) throw new CalcError('No se puede dividir entre 0');
+            value = value / percentValue;
+          }
+        } else {
+          if (op === '*') value = value * rhs;
+          else {
+            if (rhs === 0) throw new CalcError('No se puede dividir entre 0');
+            value = value / rhs;
+          }
         }
       } else if (t.type === 'num' || t.type === 'id' || t.type === 'lp') {
-        value = value * this.parseUnary();
+        value = value * this.parseUnary(allowPercent);
       } else break;
     }
     return value;
   }
 
-  parseUnary() {
+  parseUnary(allowPercent) {
     const t = this.peek();
     if (t && t.type === 'op' && (t.value === '+' || t.value === '-')) {
       this.take();
-      const v = this.parseUnary();
+      const v = this.parseUnary(allowPercent);
       return t.value === '-' ? -v : v;
     }
-    return this.parsePower();
+    return this.parsePower(allowPercent);
   }
 
-  parsePower() {
-    const base = this.parsePostfix();
+  parsePower(allowPercent) {
+    const base = this.parsePostfix(allowPercent);
     const t = this.peek();
     if (t && t.type === 'op' && t.value === '^') {
       this.take();
-      const exponent = this.parseUnary();
+      const exponent = this.parseUnary(allowPercent);
       const out = Math.pow(base, exponent);
       if (Number.isNaN(out)) throw new CalcError('Potencia no definida');
       return out;
@@ -782,14 +1715,16 @@ class Parser {
     return base;
   }
 
-  parsePostfix() {
+  parsePostfix(allowPercent) {
     let value = this.parseAtom();
     for (;;) {
       const t = this.peek();
       if (t && t.type === 'op' && t.value === '!') {
         this.take();
         value = factorial(value);
-      } else if (t && t.type === 'op' && t.value === '%') {
+      } else if (allowPercent !== false && t && t.type === 'op' && t.value === '%') {
+        // Standalone postfix percentage (e.g., "10%" = 0.1)
+        // Binary operators (+, -, *, /) handle % in parseSum/parseProduct with allowPercent=false
         this.take();
         value = value / 100;
       } else break;
@@ -867,8 +1802,7 @@ function fmt(x) {
   const negative = text.charAt(0) === '-';
   if (negative) text = text.slice(1);
   const pieces = text.split('.');
-  const grouped = pieces[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  return (negative ? '-' : '') + grouped + (pieces[1] ? '.' + pieces[1] : '');
+  return (negative ? '-' : '') + pieces[0] + (pieces[1] ? '.' + pieces[1] : '');
 }
 // ==== fin motor ====
 
@@ -886,6 +1820,7 @@ const angleButtons = Array.prototype.slice.call(document.querySelectorAll('[data
 const calcPane = document.getElementById('calcPane');
 const fxPane = document.getElementById('fxPane');
 const calcToolbar = document.getElementById('calcToolbar');
+const calcModeButtons = Array.prototype.slice.call(document.querySelectorAll('[data-calc-mode]'));
 const tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-tab]'));
 const fxAmount = document.getElementById('fxAmount');
 const fxRate = document.getElementById('fxRate');
@@ -898,15 +1833,272 @@ const fxSwap = document.getElementById('fxSwap');
 const fxRefresh = document.getElementById('fxRefresh');
 const fxUseSource = document.getElementById('fxUseSource');
 const fxUseResult = document.getElementById('fxUseResult');
+const fxReset = document.getElementById('fxReset');
 const fxDate = document.getElementById('fxDate');
 const fxToday = document.getElementById('fxToday');
+const fxModeTabs = Array.prototype.slice.call(document.querySelectorAll('[data-fx-mode]'));
+const fxRateLabel = document.getElementById('fxRateLabel');
+const themeToggle = document.getElementById('themeToggle');
+const infoToggle = document.getElementById('infoToggle');
+const fullscreenToggle = document.getElementById('fullscreenToggle');
+const minimalToggle = document.getElementById('minimalToggle');
+const histToggle = document.getElementById('histToggle');
+const helpModal = document.getElementById('helpModal');
+const installBanner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+const installDismiss = document.getElementById('installDismiss');
+const installClose = document.getElementById('installClose');
+const helpModalBody = document.getElementById('helpModalBody');
+const helpModalClose = document.getElementById('helpModalClose');
+const unitsPane = document.getElementById('unitsPane');
+const unitsCategory = document.getElementById('unitsCategory');
+const unitsFrom = document.getElementById('unitsFrom');
+const unitsTo = document.getElementById('unitsTo');
+const unitsAmount = document.getElementById('unitsAmount');
+const unitsResult = document.getElementById('unitsResult');
+const unitsDetail = document.getElementById('unitsDetail');
+const unitsSwap = document.getElementById('unitsSwap');
+const unitsUseSource = document.getElementById('unitsUseSource');
+const unitsUseResult = document.getElementById('unitsUseResult');
+const unitsReset = document.getElementById('unitsReset');
+const unitsQuick = document.getElementById('unitsQuick');
+const unitsFromUnit = document.getElementById('unitsFromUnit');
+const unitsToUnit = document.getElementById('unitsToUnit');
+const unitsOutLabel = document.getElementById('unitsOutLabel');
+const tabUnits = document.getElementById('tabUnits');
 
 const RATE_API = 'https://ve.dolarapi.com/v1/dolares/oficial';
+const RATE_API_PARALELO = 'https://ve.dolarapi.com/v1/dolares/paralelo';
+const USDT_VE_API = 'https://www.usdt.com.ve/api/v1/rates/current';
 const HISTORY_API = 'https://ve.dolarapi.com/v1/historicos/dolares/oficial/';
+const HISTORY_API_PARALELO = 'https://ve.dolarapi.com/v1/historicos/dolares/paralelo/';
+const BINANCE_P2P_API = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
 const RATE_MIN_DATE = '2023-01-03';
 const RATE_MAX_AGE = 6 * 60 * 60 * 1000;
 
 const STORE_KEY = 'calculadora-cientifica-v1';
+
+// ===== Units Converter Data =====
+const UNITS_DATA = {
+  longitud: {
+    label: 'Longitud',
+    units: {
+      'mm': { label: 'Milímetro (mm)', toBase: 0.001 },
+      'cm': { label: 'Centímetro (cm)', toBase: 0.01 },
+      'm': { label: 'Metro (m)', toBase: 1 },
+      'km': { label: 'Kilómetro (km)', toBase: 1000 },
+      'in': { label: 'Pulgada (in)', toBase: 0.0254 },
+      'ft': { label: 'Pie (ft)', toBase: 0.3048 },
+      'yd': { label: 'Yarda (yd)', toBase: 0.9144 },
+      'mi': { label: 'Milla (mi)', toBase: 1609.344 },
+      'nmi': { label: 'Milla náutica (nmi)', toBase: 1852 },
+      'ly': { label: 'Año luz (ly)', toBase: 9.461e15 },
+      'au': { label: 'Unidad astronómica (au)', toBase: 1.496e11 },
+      'pc': { label: 'Pársec (pc)', toBase: 3.086e16 }
+    }
+  },
+  masa: {
+    label: 'Masa / Peso',
+    units: {
+      'mg': { label: 'Miligramo (mg)', toBase: 0.000001 },
+      'g': { label: 'Gramo (g)', toBase: 0.001 },
+      'kg': { label: 'Kilogramo (kg)', toBase: 1 },
+      't': { label: 'Tonelada (t)', toBase: 1000 },
+      'oz': { label: 'Onza (oz)', toBase: 0.0283495 },
+      'lb': { label: 'Libra (lb)', toBase: 0.453592 },
+      'st': { label: 'Stone (st)', toBase: 6.35029 },
+      'ct': { label: 'Quilate (ct)', toBase: 0.0002 },
+      'gr': { label: 'Grano (gr)', toBase: 0.0000647989 },
+      'oz_t': { label: 'Onza troy (oz t)', toBase: 0.0311035 },
+      'slug': { label: 'Slug', toBase: 14.5939 }
+    }
+  },
+  temperatura: {
+    label: 'Temperatura',
+    units: {
+      'c': { label: 'Celsius (°C)', toBase: 1, offset: 0, fromBase: 1, toBaseOffset: 0 },
+      'f': { label: 'Fahrenheit (°F)', toBase: 5/9, offset: -32*5/9, fromBase: 9/5, toBaseOffset: 32 },
+      'k': { label: 'Kelvin (K)', toBase: 1, offset: -273.15, fromBase: 1, toBaseOffset: 273.15 },
+      'r': { label: 'Rankine (°R)', toBase: 5/9, offset: 0, fromBase: 9/5, toBaseOffset: 0 },
+      're': { label: 'Réaumur (°Ré)', toBase: 0.8, offset: 0, fromBase: 1.25, toBaseOffset: 0 }
+    },
+    isTemperature: true
+  },
+  volumen: {
+    label: 'Volumen',
+    units: {
+      'ml': { label: 'Mililitro (ml)', toBase: 0.000001 },
+      'cl': { label: 'Centilitro (cl)', toBase: 0.00001 },
+      'dl': { label: 'Decilitro (dl)', toBase: 0.0001 },
+      'l': { label: 'Litro (l)', toBase: 0.001 },
+      'm3': { label: 'Metro cúbico (m³)', toBase: 1 },
+      'cm3': { label: 'Centímetro cúbico (cm³)', toBase: 0.000001 },
+      'in3': { label: 'Pulgada cúbica (in³)', toBase: 0.0000163871 },
+      'ft3': { label: 'Pie cúbico (ft³)', toBase: 0.0283168 },
+      'yd3': { label: 'Yarda cúbica (yd³)', toBase: 0.764555 },
+      'gal_us': { label: 'Galón US (gal)', toBase: 0.00378541 },
+      'gal_uk': { label: 'Galón UK (gal)', toBase: 0.00454609 },
+      'qt_us': { label: 'Cuarto US (qt)', toBase: 0.000946353 },
+      'pt_us': { label: 'Pinta US (pt)', toBase: 0.000473176 },
+      'cup_us': { label: 'Taza US (cup)', toBase: 0.000236588 },
+      'fl_oz_us': { label: 'Onza fluida US (fl oz)', toBase: 0.0000295735 },
+      'tbsp': { label: 'Cucharada (tbsp)', toBase: 0.0000147868 },
+      'tsp': { label: 'Cucharadita (tsp)', toBase: 0.00000492892 },
+      'bbl': { label: 'Barril de petróleo (bbl)', toBase: 0.158987 }
+    }
+  },
+  area: {
+    label: 'Área',
+    units: {
+      'mm2': { label: 'Milímetro cuadrado (mm²)', toBase: 0.000001 },
+      'cm2': { label: 'Centímetro cuadrado (cm²)', toBase: 0.0001 },
+      'm2': { label: 'Metro cuadrado (m²)', toBase: 1 },
+      'km2': { label: 'Kilómetro cuadrado (km²)', toBase: 1000000 },
+      'ha': { label: 'Hectárea (ha)', toBase: 10000 },
+      'a': { label: 'Are (a)', toBase: 100 },
+      'in2': { label: 'Pulgada cuadrada (in²)', toBase: 0.00064516 },
+      'ft2': { label: 'Pie cuadrado (ft²)', toBase: 0.092903 },
+      'yd2': { label: 'Yarda cuadrada (yd²)', toBase: 0.836127 },
+      'ac': { label: 'Acre (ac)', toBase: 4046.86 },
+      'mi2': { label: 'Milla cuadrada (mi²)', toBase: 2589988 }
+    }
+  },
+  velocidad: {
+    label: 'Velocidad',
+    units: {
+      'm_s': { label: 'Metro/segundo (m/s)', toBase: 1 },
+      'km_h': { label: 'Kilómetro/hora (km/h)', toBase: 1/3.6 },
+      'mph': { label: 'Milla/hora (mph)', toBase: 0.44704 },
+      'kn': { label: 'Nudo (kn)', toBase: 0.514444 },
+      'ft_s': { label: 'Pie/segundo (ft/s)', toBase: 0.3048 },
+      'mach': { label: 'Mach (a 20°C, nivel del mar)', toBase: 343 },
+      'c': { label: 'Velocidad de la luz (c)', toBase: 299792458 }
+    }
+  },
+  tiempo: {
+    label: 'Tiempo',
+    units: {
+      'ns': { label: 'Nanosegundo (ns)', toBase: 1e-9 },
+      'us': { label: 'Microsegundo (µs)', toBase: 1e-6 },
+      'ms': { label: 'Milisegundo (ms)', toBase: 0.001 },
+      's': { label: 'Segundo (s)', toBase: 1 },
+      'min': { label: 'Minuto (min)', toBase: 60 },
+      'h': { label: 'Hora (h)', toBase: 3600 },
+      'd': { label: 'Día (d)', toBase: 86400 },
+      'wk': { label: 'Semana (wk)', toBase: 604800 },
+      'mo': { label: 'Mes (30 días)', toBase: 2592000 },
+      'yr': { label: 'Año (365.25 días)', toBase: 31557600 },
+      'dec': { label: 'Década', toBase: 315576000 },
+      'cent': { label: 'Siglo', toBase: 3155760000 }
+    }
+  },
+  energia: {
+    label: 'Energía / Trabajo',
+    units: {
+      'j': { label: 'Julio (J)', toBase: 1 },
+      'kj': { label: 'Kilojulio (kJ)', toBase: 1000 },
+      'cal': { label: 'Caloría (cal)', toBase: 4.184 },
+      'kcal': { label: 'Kilocaloría (kcal)', toBase: 4184 },
+      'wh': { label: 'Vatio-hora (Wh)', toBase: 3600 },
+      'kwh': { label: 'Kilovatio-hora (kWh)', toBase: 3600000 },
+      'btu': { label: 'BTU', toBase: 1055.06 },
+      'ft_lb': { label: 'Pie-libra (ft·lb)', toBase: 1.35582 },
+      'ev': { label: 'Electrón-voltio (eV)', toBase: 1.602176634e-19 },
+      'therm': { label: 'Termia (thm)', toBase: 105506000 }
+    }
+  },
+  presion: {
+    label: 'Presión',
+    units: {
+      'pa': { label: 'Pascal (Pa)', toBase: 1 },
+      'kpa': { label: 'Kilopascal (kPa)', toBase: 1000 },
+      'mpa': { label: 'Megapascal (MPa)', toBase: 1000000 },
+      'bar': { label: 'Bar', toBase: 100000 },
+      'mbar': { label: 'Millibar (mbar)', toBase: 100 },
+      'atm': { label: 'Atmósfera (atm)', toBase: 101325 },
+      'psi': { label: 'Libra/pulg² (psi)', toBase: 6894.76 },
+      'torr': { label: 'Torr (mmHg)', toBase: 133.322 },
+      'mmhg': { label: 'Milímetro de mercurio (mmHg)', toBase: 133.322 },
+      'inhg': { label: 'Pulgada de mercurio (inHg)', toBase: 3386.39 },
+      'kgf_cm2': { label: 'Kgf/cm²', toBase: 98066.5 }
+    }
+  },
+  potencia: {
+    label: 'Potencia',
+    units: {
+      'w': { label: 'Vatio (W)', toBase: 1 },
+      'kw': { label: 'Kilovatio (kW)', toBase: 1000 },
+      'mw': { label: 'Megavatio (MW)', toBase: 1000000 },
+      'hp': { label: 'Caballo de vapor (HP)', toBase: 745.7 },
+      'hp_m': { label: 'Caballo métrico (cv)', toBase: 735.5 },
+      'btu_h': { label: 'BTU/hora', toBase: 0.293071 },
+      'kcal_h': { label: 'Kilocaloría/hora', toBase: 1.16222 },
+      'ft_lb_s': { label: 'Pie-libra/segundo', toBase: 1.35582 }
+    }
+  },
+  datos: {
+    label: 'Datos / Almacenamiento',
+    units: {
+      'b': { label: 'Bit (b)', toBase: 1 },
+      'B': { label: 'Byte (B)', toBase: 8 },
+      'kb': { label: 'Kilobit (kb)', toBase: 1000 },
+      'kB': { label: 'Kilobyte (kB)', toBase: 8000 },
+      'kib': { label: 'Kibibit (Kib)', toBase: 1024 },
+      'kiB': { label: 'Kibibyte (KiB)', toBase: 8192 },
+      'mb': { label: 'Megabit (Mb)', toBase: 1e6 },
+      'mB': { label: 'Megabyte (MB)', toBase: 8e6 },
+      'mib': { label: 'Mebibit (Mib)', toBase: 1048576 },
+      'miB': { label: 'Mebibyte (MiB)', toBase: 8388608 },
+      'gb': { label: 'Gigabit (Gb)', toBase: 1e9 },
+      'gB': { label: 'Gigabyte (GB)', toBase: 8e9 },
+      'gib': { label: 'Gibibit (Gib)', toBase: 1073741824 },
+      'giB': { label: 'Gibibyte (GiB)', toBase: 8589934592 },
+      'tb': { label: 'Terabit (Tb)', toBase: 1e12 },
+      'tB': { label: 'Terabyte (TB)', toBase: 8e12 },
+      'tib': { label: 'Tebibit (Tib)', toBase: 1099511627776 },
+      'tiB': { label: 'Tebibyte (TiB)', toBase: 8796093022208 },
+      'pb': { label: 'Petabit (Pb)', toBase: 1e15 },
+      'pB': { label: 'Petabyte (PB)', toBase: 8e15 }
+    }
+  },
+  angulo: {
+    label: 'Ángulo',
+    units: {
+      'deg': { label: 'Grado (°)', toBase: 1 },
+      'rad': { label: 'Radián (rad)', toBase: 180/Math.PI },
+      'grad': { label: 'Gradián (gon)', toBase: 0.9 },
+      'turn': { label: 'Vuelta (turn)', toBase: 360 },
+      'arcmin': { label: 'Minuto de arco (\')', toBase: 1/60 },
+      'arcsec': { label: 'Segundo de arco (\")', toBase: 1/3600 },
+      'mil': { label: 'Mil angular (mil)', toBase: 0.05625 }
+    }
+  },
+  frecuencia: {
+    label: 'Frecuencia',
+    units: {
+      'hz': { label: 'Hercio (Hz)', toBase: 1 },
+      'khz': { label: 'Kilhercio (kHz)', toBase: 1000 },
+      'mhz': { label: 'Megahercio (MHz)', toBase: 1000000 },
+      'ghz': { label: 'Gigahercio (GHz)', toBase: 1000000000 },
+      'thz': { label: 'Terahercio (THz)', toBase: 1e12 },
+      'rpm': { label: 'Revoluciones/minuto (RPM)', toBase: 1/60 },
+      'rps': { label: 'Revoluciones/segundo (RPS)', toBase: 1 }
+    }
+  },
+  fuerza: {
+    label: 'Fuerza',
+    units: {
+      'n': { label: 'Newton (N)', toBase: 1 },
+      'kn': { label: 'Kilonewton (kN)', toBase: 1000 },
+      'mn': { label: 'Meganewton (MN)', toBase: 1000000 },
+      'kgf': { label: 'Kilogramo-fuerza (kgf)', toBase: 9.80665 },
+      'gf': { label: 'Gramo-fuerza (gf)', toBase: 0.00980665 },
+      'lbf': { label: 'Libra-fuerza (lbf)', toBase: 4.44822 },
+      'pdl': { label: 'Poundal (pdl)', toBase: 0.138255 },
+      'kip': { label: 'Kip', toBase: 4448.22 }
+    }
+  }
+};
 
 const state = {
   expr: '',
@@ -918,21 +2110,68 @@ const state = {
   history: [],
   lastWasEval: false,
   tab: 'calc',
+  calcMode: 'std', // 'std' = estándar, 'sci' = científica
   fx: {
+    mode: 'usd2ves',
     amount: '1',
     dir: 'usd2ves',
     date: todayISO(),
     rate: 0,
+    rateP2P: 0,
     source: '',
+    sourceP2P: '',
     rateDate: null,
+    rateDateP2P: null,
     fetchedAt: 0,
+    fetchedAtP2P: 0,
     loading: false,
     error: '',
-    cache: {}
+    cache: {},
+    cacheP2P: {}
+  },
+  units: {
+    category: 'longitud',
+    from: 'm',
+    to: 'ft',
+    amount: '1'
   }
 };
 
-const KEY_DEFS = [
+/* Standard calculator key layout - 4 columns, traditional calculator style (5 rows) */
+const KEY_DEFS_STD = [
+  // Row 1: Clear, Backspace, Percent, Divide
+  { label: 'AC', act: 'clear', cls: 'fn danger' },
+  { label: '⌫', act: 'back', cls: 'fn' },
+  { label: '%', ins: '%', cls: 'fn' },
+  { label: '÷', ins: '/', cls: 'op' },
+
+  // Row 2: 7, 8, 9, Multiply
+  { label: '7', ins: '7', cls: 'num' },
+  { label: '8', ins: '8', cls: 'num' },
+  { label: '9', ins: '9', cls: 'num' },
+  { label: '×', ins: '*', cls: 'op' },
+
+  // Row 3: 4, 5, 6, Subtract
+  { label: '4', ins: '4', cls: 'num' },
+  { label: '5', ins: '5', cls: 'num' },
+  { label: '6', ins: '6', cls: 'num' },
+  { label: '−', ins: '-', cls: 'op' },
+
+  // Row 4: 1, 2, 3, Add
+  { label: '1', ins: '1', cls: 'num' },
+  { label: '2', ins: '2', cls: 'num' },
+  { label: '3', ins: '3', cls: 'num' },
+  { label: '+', ins: '+', cls: 'op' },
+
+  // Row 5: 0 (span 2), ., Equals
+  { label: '0', ins: '0', cls: 'num', span: 2 },
+  { label: '.', ins: '.', cls: 'num' },
+  { label: '=', act: 'equals', cls: 'eq' }
+];
+
+/* Scientific calculator key layout - 6 columns */
+const KEY_DEFS_SCI = [
+  // Row 1: Clear, Backspace, Parentheses, %, Divide
   { label: 'AC', act: 'clear', cls: 'fn danger' },
   { label: '⌫', act: 'back', cls: 'fn' },
   { label: '(', ins: '(', cls: 'fn' },
@@ -940,6 +2179,7 @@ const KEY_DEFS = [
   { label: '%', ins: '%', cls: 'fn' },
   { label: '÷', ins: '/', cls: 'op' },
 
+  // Row 2: 2nd, sin, cos, tan, ln, Multiply
   { label: '2nd', act: 'second', cls: 'fn accent' },
   { label: 'sin', ins: 'sin(', alt: 'sin<sup>−1</sup>', altIns: 'asin(', cls: 'fn' },
   { label: 'cos', ins: 'cos(', alt: 'cos<sup>−1</sup>', altIns: 'acos(', cls: 'fn' },
@@ -947,6 +2187,7 @@ const KEY_DEFS = [
   { label: 'ln', ins: 'ln(', alt: 'e<sup>x</sup>', altIns: 'exp(', cls: 'fn' },
   { label: '×', ins: '*', cls: 'op' },
 
+  // Row 3: x², 7, 8, 9, log, Subtract
   { label: 'x<sup>2</sup>', ins: '^2', alt: 'x<sup>3</sup>', altIns: '^3', cls: 'fn' },
   { label: '7', ins: '7', cls: 'num' },
   { label: '8', ins: '8', cls: 'num' },
@@ -954,6 +2195,7 @@ const KEY_DEFS = [
   { label: 'log', ins: 'log(', alt: '10<sup>x</sup>', altIns: '10^', cls: 'fn' },
   { label: '−', ins: '-', cls: 'op' },
 
+  // Row 4: xʸ, 4, 5, 6, √, Add
   { label: 'x<sup>y</sup>', ins: '^', alt: '<sup>y</sup>√x', altIns: '^(1/', cls: 'fn' },
   { label: '4', ins: '4', cls: 'num' },
   { label: '5', ins: '5', cls: 'num' },
@@ -961,6 +2203,7 @@ const KEY_DEFS = [
   { label: '√', ins: 'sqrt(', alt: '∛', altIns: 'cbrt(', cls: 'fn' },
   { label: '+', ins: '+', cls: 'op' },
 
+  // Row 5: 1/x, 1, 2, 3, n!, Equals (span 2 rows)
   { label: '1/x', ins: '1/(', alt: '|x|', altIns: 'abs(', cls: 'fn' },
   { label: '1', ins: '1', cls: 'num' },
   { label: '2', ins: '2', cls: 'num' },
@@ -968,6 +2211,7 @@ const KEY_DEFS = [
   { label: 'n!', ins: '!', cls: 'fn' },
   { label: '=', act: 'equals', cls: 'eq' },
 
+  // Row 6: π, 0, ., Ans, e
   { label: 'π', ins: 'π', cls: 'fn' },
   { label: '0', ins: '0', cls: 'num' },
   { label: '.', ins: '.', cls: 'num' },
@@ -976,13 +2220,18 @@ const KEY_DEFS = [
 ];
 
 function buildKeys() {
-  KEY_DEFS.forEach(function (def) {
+  const defs = state.calcMode === 'std' ? KEY_DEFS_STD : KEY_DEFS_SCI;
+  defs.forEach(function (def) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'key ' + (def.cls || '');
     btn.innerHTML = '<span class="k">' + def.label + '</span>';
     btn._def = def;
     if (def.act === 'second') btn.setAttribute('aria-pressed', 'false');
+    // Handle span for standard mode "0" key
+    if (def.span === 2) {
+      btn.style.gridColumn = 'span 2';
+    }
     keysEl.appendChild(btn);
   });
 }
@@ -1004,6 +2253,12 @@ function renderKeys() {
       btn.setAttribute('aria-pressed', String(state.second));
     }
   });
+}
+
+function rebuildKeys() {
+  keysEl.innerHTML = '';
+  buildKeys();
+  renderKeys();
 }
 
 function syncExpr() {
@@ -1193,8 +2448,8 @@ function handleMemory(action) {
   saveState();
 }
 
-const MONEY_FORMAT = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const RATE_FORMAT = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+const MONEY_FORMAT = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
+const RATE_FORMAT = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4, useGrouping: false });
 
 function parseMoneyText(text) {
   let cleaned = String(text).replace(/[^\d.,-]/g, '');
@@ -1246,31 +2501,101 @@ function shiftIsoDate(iso, days) {
 
 function renderFx() {
   const fx = state.fx;
-  const usdToVes = fx.dir === 'usd2ves';
-  fxFromLabel.textContent = usdToVes ? 'dólares (USD)' : 'bolívares (VES)';
-  fxToLabel.textContent = usdToVes ? 'Bolívares (VES)' : 'Dólares (USD)';
+  const mode = fx.mode;
+  const isUsd2Ves = mode === 'usd2ves';
+  const isUsdt2Ves = mode === 'usdt2ves';
+  const isUsd2Usdt = mode === 'usd2usdt';
+
+  // Update mode tabs
+  fxModeTabs.forEach(function (btn) {
+    btn.setAttribute('aria-selected', String(btn.dataset.fxMode === mode));
+  });
+
+  // Update labels based on mode
+  if (isUsd2Ves) {
+    fxFromLabel.textContent = fx.dir === 'usd2ves' ? 'dólares (USD)' : 'bolívares (VES)';
+    fxToLabel.textContent = fx.dir === 'usd2ves' ? 'Bolívares (VES)' : 'Dólares (USD)';
+    fxSwap.hidden = false;
+  } else if (isUsdt2Ves) {
+    fxFromLabel.textContent = fx.dir === 'usd2ves' ? 'USDT (P2P)' : 'bolívares (VES)';
+    fxToLabel.textContent = fx.dir === 'usd2ves' ? 'Bolívares (VES)' : 'USDT (P2P)';
+    fxSwap.hidden = false;
+  } else { // usd2usdt
+    fxFromLabel.textContent = 'dólares (USD)';
+    fxToLabel.textContent = 'USDT (P2P)';
+    fxSwap.hidden = true; // No swap for this mode (fixed direction)
+  }
+
   if (fxDate.value !== fx.date) fxDate.value = fx.date;
 
+  // Determine which rate to show in the input
+  const showRate = isUsd2Ves ? fx.rate : (isUsdt2Ves ? fx.rateP2P : (fx.rate > 0 && fx.rateP2P > 0 ? fx.rate / fx.rateP2P : 0));
   if (document.activeElement !== fxRate) {
-    fxRate.value = fx.rate > 0 ? formatRateValue(fx.rate) : '';
+    fxRate.value = showRate > 0 ? formatRateValue(showRate) : '';
   }
 
   const amount = parseMoneyText(fxAmount.value);
-  const hasConversion = fx.rate > 0 && !Number.isNaN(amount);
+  let hasConversion = false;
+  let converted = 0;
+  let rateLabel = '';
+  let detailParts = [];
+
+  if (isUsd2Ves) {
+    hasConversion = fx.rate > 0 && !Number.isNaN(amount);
+    if (hasConversion) {
+      const usdToVes = fx.dir === 'usd2ves';
+      converted = usdToVes ? amount * fx.rate : amount / fx.rate;
+      fxResult.textContent = (usdToVes ? 'Bs. ' : '$ ') + formatMoney(converted);
+      detailParts.push((usdToVes ? formatMoney(amount) + ' USD' : 'Bs. ' + formatMoney(amount)));
+      detailParts.push('1 USD = Bs. ' + formatRateValue(fx.rate));
+      fxUseSource.textContent = 'Usar ' + formatMoney(amount) + (usdToVes ? ' USD' : ' Bs.');
+      fxUseResult.textContent = 'Usar ' + formatMoney(converted) + (usdToVes ? ' Bs.' : ' USD');
+    }
+    rateLabel = 'Tasa BCV (Bs por dólar)';
+  } else if (isUsdt2Ves) {
+    hasConversion = fx.rateP2P > 0 && !Number.isNaN(amount);
+    if (hasConversion) {
+      const usdtToVes = fx.dir === 'usd2ves';
+      converted = usdtToVes ? amount * fx.rateP2P : amount / fx.rateP2P;
+      fxResult.textContent = (usdtToVes ? 'Bs. ' : '₮ ') + formatMoney(converted);
+      detailParts.push((usdtToVes ? formatMoney(amount) + ' USDT' : 'Bs. ' + formatMoney(amount)));
+      detailParts.push('1 USDT = Bs. ' + formatRateValue(fx.rateP2P));
+      fxUseSource.textContent = 'Usar ' + formatMoney(amount) + (usdtToVes ? ' USDT' : ' Bs.');
+      fxUseResult.textContent = 'Usar ' + formatMoney(converted) + (usdtToVes ? ' Bs.' : ' USDT');
+    }
+    const p2pSrcLabel = fx.sourceP2P === 'usdtve' ? 'usdt.com.ve (Binance P2P)' : (fx.sourceP2P === 'binance' ? 'Binance P2P' : (fx.sourceP2P === 'paralelo' ? 'Paralelo' : 'P2P'));
+    rateLabel = 'Tasa ' + p2pSrcLabel + ' (Bs por USDT)';
+  } else { // usd2usdt
+    hasConversion = fx.rate > 0 && fx.rateP2P > 0 && !Number.isNaN(amount);
+    if (hasConversion) {
+      converted = amount * fx.rate / fx.rateP2P;
+      fxResult.textContent = '₮ ' + formatMoney(converted);
+      detailParts.push(formatMoney(amount) + ' USD');
+      detailParts.push('1 USD = ' + formatRateValue(fx.rate / fx.rateP2P) + ' USDT');
+      detailParts.push('(BCV: Bs. ' + formatRateValue(fx.rate) + ' / P2P: Bs. ' + formatRateValue(fx.rateP2P) + ')');
+      fxUseSource.textContent = 'Usar ' + formatMoney(amount) + ' USD';
+      fxUseResult.textContent = 'Usar ' + formatMoney(converted) + ' USDT';
+    }
+    rateLabel = 'Relación USD/USDT';
+  }
+
+  // Update the rate label in the DOM
+  const rateLabelEl = document.getElementById('fxRateLabel');
+  if (rateLabelEl) rateLabelEl.textContent = rateLabel;
+
   if (hasConversion) {
-    const converted = usdToVes ? amount * fx.rate : amount / fx.rate;
-    fxResult.textContent = (usdToVes ? 'Bs. ' : '$ ') + formatMoney(converted);
-    fxDetail.textContent = (usdToVes ? formatMoney(amount) + ' USD' : 'Bs. ' + formatMoney(amount)) +
-      ' · 1 USD = Bs. ' + formatRateValue(fx.rate);
+    fxDetail.textContent = detailParts.join(' · ');
     fxUseSource.disabled = false;
     fxUseResult.disabled = false;
-    fxUseSource.textContent = 'Usar ' + formatMoney(amount) + (usdToVes ? ' USD' : ' Bs.');
-    fxUseResult.textContent = 'Usar ' + formatMoney(converted) + (usdToVes ? ' Bs.' : ' USD');
   } else {
     fxResult.textContent = '—';
-    fxDetail.textContent = fx.rate > 0
-      ? 'Escribe un monto para convertir'
-      : 'Escribe la tasa del BCV para empezar';
+    if (isUsd2Ves) {
+      fxDetail.textContent = fx.rate > 0 ? 'Escribe un monto para convertir' : 'Escribe la tasa del BCV para empezar';
+    } else if (isUsdt2Ves) {
+      fxDetail.textContent = fx.rateP2P > 0 ? 'Escribe un monto para convertir' : 'Escribe la tasa P2P para empezar';
+    } else {
+      fxDetail.textContent = (fx.rate > 0 && fx.rateP2P > 0) ? 'Escribe un monto para convertir' : 'Necesitas ambas tasas (BCV y P2P)';
+    }
     fxUseSource.disabled = true;
     fxUseResult.disabled = true;
     fxUseSource.textContent = 'Usar monto';
@@ -1281,25 +2606,47 @@ function renderFx() {
   fxRefresh.textContent = fx.loading ? '…' : 'Actualizar';
 
   if (fx.loading) {
-    fxMeta.textContent = 'Buscando la tasa del BCV…';
+    fxMeta.textContent = 'Buscando tasas…';
     fxMeta.classList.remove('error');
     return;
   }
   if (fx.error) {
     fxMeta.textContent = fx.error;
-    fxMeta.classList.toggle('error', !(fx.rate > 0));
+    fxMeta.classList.toggle('error', true);
     return;
   }
   fxMeta.classList.remove('error');
-  if (!(fx.rate > 0)) {
-    fxMeta.textContent = 'La tasa se guarda en este dispositivo para usarla sin conexión.';
-  } else if (fx.source === 'manual') {
-    fxMeta.textContent = 'Tasa manual del ' + formatIsoDay(fx.date);
-  } else if (fx.rateDate && fx.rateDate.slice(0, 10) !== fx.date) {
-    fxMeta.textContent = 'Tasa del BCV del ' + formatIsoDay(fx.rateDate) +
-      ' · vigente el ' + formatIsoDay(fx.date);
-  } else {
-    fxMeta.textContent = 'Tasa oficial del BCV · ' + formatIsoDay(fx.date);
+
+  // Build meta text based on mode
+  if (isUsd2Ves) {
+    if (!(fx.rate > 0)) {
+      fxMeta.textContent = 'La tasa se guarda en este dispositivo para usarla sin conexión.';
+    } else if (fx.source === 'manual') {
+      fxMeta.textContent = 'Tasa manual del ' + formatIsoDay(fx.date);
+    } else if (fx.rateDate && fx.rateDate.slice(0, 10) !== fx.date) {
+      fxMeta.textContent = 'Tasa del BCV del ' + formatIsoDay(fx.rateDate) + ' · vigente el ' + formatIsoDay(fx.date);
+    } else {
+      fxMeta.textContent = 'Tasa oficial del BCV · ' + formatIsoDay(fx.date);
+    }
+  } else if (isUsdt2Ves) {
+    if (!(fx.rateP2P > 0)) {
+      fxMeta.textContent = 'La tasa P2P se guarda en este dispositivo para usarla sin conexión.';
+    } else if (fx.sourceP2P === 'manual') {
+      fxMeta.textContent = 'Tasa P2P manual del ' + formatIsoDay(fx.date);
+    } else if (fx.rateDateP2P && fx.rateDateP2P.slice(0, 10) !== fx.date) {
+      fxMeta.textContent = 'Tasa P2P del ' + formatIsoDay(fx.rateDateP2P) + ' · vigente el ' + formatIsoDay(fx.date);
+    } else {
+      const srcLabel = fx.sourceP2P === 'usdtve' ? 'usdt.com.ve (Binance P2P)' : (fx.sourceP2P === 'binance' ? 'Binance P2P' : 'Paralelo (ve.dolarapi.com)');
+      fxMeta.textContent = 'Tasa P2P (' + srcLabel + ') · ' + formatIsoDay(fx.date);
+    }
+  } else { // usd2usdt
+    if (!(fx.rate > 0) || !(fx.rateP2P > 0)) {
+      fxMeta.textContent = 'Necesitas ambas tasas (BCV y P2P) para calcular la relación.';
+    } else {
+      const ratio = fx.rate / fx.rateP2P;
+      const p2pSrc = fx.sourceP2P === 'usdtve' ? 'usdt.com.ve (Binance P2P)' : (fx.sourceP2P === 'binance' ? 'Binance P2P' : (fx.sourceP2P === 'paralelo' ? 'Paralelo' : 'manual'));
+      fxMeta.textContent = '1 USD = ' + formatRateValue(ratio) + ' USDT · BCV: Bs. ' + formatRateValue(fx.rate) + ' / P2P: Bs. ' + formatRateValue(fx.rateP2P) + ' (' + p2pSrc + ') · ' + formatIsoDay(fx.date);
+    }
   }
 }
 
@@ -1317,22 +2664,257 @@ function insertConversion(value) {
   saveState();
 }
 
-function pruneRateCache() {
-  const keys = Object.keys(state.fx.cache).sort();
+function pruneRateCache(cache) {
+  const keys = Object.keys(cache).sort();
   while (keys.length > 90) {
-    delete state.fx.cache[keys.shift()];
+    delete cache[keys.shift()];
   }
 }
 
-function storeRate(date, value, published, source) {
+function storeRate(date, value, published, source, isP2P) {
   const fx = state.fx;
-  fx.rate = value;
-  fx.rateDate = published;
-  fx.source = source;
-  fx.fetchedAt = Date.now();
+  if (isP2P) {
+    fx.rateP2P = value;
+    fx.rateDateP2P = published;
+    fx.sourceP2P = source;
+    fx.fetchedAtP2P = Date.now();
+    fx.cacheP2P[date] = { rate: value, published: published, source: source, fetchedAt: fx.fetchedAtP2P };
+    pruneRateCache(fx.cacheP2P);
+  } else {
+    fx.rate = value;
+    fx.rateDate = published;
+    fx.source = source;
+    fx.fetchedAt = Date.now();
+    fx.cache[date] = { rate: value, published: published, source: source, fetchedAt: fx.fetchedAt };
+    pruneRateCache(fx.cache);
+  }
   fx.error = '';
-  fx.cache[date] = { rate: value, published: published, source: source, fetchedAt: fx.fetchedAt };
-  pruneRateCache();
+}
+
+function fetchBothRates(date, finish) {
+  const fx = state.fx;
+  let bcvDone = false;
+  let p2pDone = false;
+  let bcvError = null;
+  let p2pError = null;
+
+  const checkFinish = function () {
+    if (bcvDone && p2pDone) {
+      fx.loading = false;
+      renderFx();
+      saveState();
+      finish();
+    }
+  };
+
+  // Fetch BCV rate
+  const fetchBCV = function () {
+    const fetchBCVWithRetry = function (attempt) {
+      if (typeof attempt !== 'number') attempt = 1;
+      const maxAttempts = 3;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(function () { controller.abort(); }, 8000);
+      
+      return fetch(RATE_API, {
+        cache: 'no-store',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; CalculadoraCientifica/1.0)'
+        },
+        signal: controller.signal
+      })
+        .then(function (response) {
+          clearTimeout(timeoutId);
+          if (!response || !response.ok) {
+            var err = new Error('respuesta: ' + response.status);
+            err.status = response && response.status;
+            throw err;
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          const value = Number(data && (data.promedio || data.venta || 0));
+          if (!Number.isFinite(value) || value <= 0) throw new Error('tasa');
+          const published = typeof data.fechaActualizacion === 'string'
+            ? data.fechaActualizacion.slice(0, 10)
+            : date;
+          storeRate(date, value, published, 'bcv', false);
+        })
+        .catch(function (err) {
+          clearTimeout(timeoutId);
+          if (attempt < maxAttempts && (err.name === 'AbortError' || err.name === 'TypeError' || (err.status && err.status >= 500))) {
+            const delay = 500 * Math.pow(2, attempt - 1);
+            return new Promise(function (resolve) {
+              setTimeout(function () { resolve(fetchBCVWithRetry(attempt + 1)); }, delay);
+            });
+          }
+          throw err;
+        });
+    };
+
+    if (date === todayISO()) {
+      fetchBCVWithRetry()
+        .then(function () {
+          bcvDone = true;
+          checkFinish();
+        }, function (err) {
+          bcvError = err;
+          bcvDone = true;
+          checkFinish();
+        });
+    } else {
+      lookupHistoric(date, 0, function (err) {
+        if (err) bcvError = err;
+        bcvDone = true;
+        checkFinish();
+      }, false);
+    }
+  };
+
+  // Fetch P2P rate - use usdt.com.ve API, fallback to paralelo
+  const fetchP2P = function () {
+    if (date === todayISO()) {
+      // First try usdt.com.ve API
+      fetchUSDTve()
+        .then(function (value) {
+          if (value > 0) {
+            storeRate(date, value, date, 'usdtve', true);
+            p2pDone = true;
+            checkFinish();
+          } else {
+            // Fallback to paralelo rate
+            return fetchParalelo();
+          }
+        })
+        .then(function (value) {
+          if (value && value > 0 && !p2pDone) {
+            storeRate(date, value, date, 'paralelo', true);
+            p2pDone = true;
+            checkFinish();
+          } else if (!p2pDone) {
+            p2pError = new Error('No se pudo obtener tasa P2P');
+            p2pDone = true;
+            checkFinish();
+          }
+        }, function (err) {
+          p2pError = err;
+          // Try fallback
+          fetchParalelo()
+            .then(function (value) {
+              if (value > 0) {
+                storeRate(date, value, date, 'paralelo', true);
+              } else {
+                p2pError = err;
+              }
+              p2pDone = true;
+              checkFinish();
+            })
+            .catch(function () {
+              p2pDone = true;
+              checkFinish();
+            });
+        });
+    } else {
+      // For historical dates, use paralelo endpoint
+      lookupHistoric(date, 0, function (err) {
+        if (err) p2pError = err;
+        p2pDone = true;
+        checkFinish();
+      }, true);
+    }
+  };
+
+  // Fetch from usdt.com.ve API (primary) - returns binance, bybit, bcv rates
+  function fetchUSDTve(attempt) {
+    if (typeof attempt !== 'number') attempt = 1;
+    const maxAttempts = 3;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(function () { controller.abort(); }, 10000); // 10 second timeout
+    
+    return fetch(USDT_VE_API, {
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; CalculadoraCientifica/1.0)'
+      },
+      signal: controller.signal
+    })
+      .then(function (response) {
+        clearTimeout(timeoutId);
+        if (!response || !response.ok) {
+          var err = new Error('respuesta usdt.com.ve: ' + response.status);
+          err.status = response && response.status;
+          throw err;
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        // Parse usdt.com.ve response: data.data.binance.buy_rate is the P2P rate
+        const d = data && data.data;
+        if (!d || typeof d.binance === 'undefined') throw new Error('formato inesperado');
+        // Use binance buy_rate (rate to buy USDT with VES = P2P rate)
+        const rate = d.binance && typeof d.binance.buy_rate === 'number' ? d.binance.buy_rate
+                  : d.bybit && typeof d.bybit.buy_rate === 'number' ? d.bybit.buy_rate
+                  : null;
+        if (!rate || rate <= 0) throw new Error('sin tasa válida');
+        return rate;
+      })
+      .catch(function (err) {
+        clearTimeout(timeoutId);
+        // Retry on network errors or 5xx errors
+        if (attempt < maxAttempts && (err.name === 'AbortError' || err.name === 'TypeError' || (err.status && err.status >= 500))) {
+          const delay = 500 * Math.pow(2, attempt - 1);
+          return new Promise(function (resolve) {
+            setTimeout(function () { resolve(fetchUSDTve(attempt + 1)); }, delay);
+          });
+        }
+        throw err;
+      });
+  }
+
+  // Fallback: fetch from ve.dolarapi.com paralelo endpoint
+  function fetchParalelo(attempt) {
+    if (typeof attempt !== 'number') attempt = 1;
+    const maxAttempts = 3;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(function () { controller.abort(); }, 8000);
+    
+    return fetch(RATE_API_PARALELO, {
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; CalculadoraCientifica/1.0)'
+      },
+      signal: controller.signal
+    })
+      .then(function (response) {
+        clearTimeout(timeoutId);
+        if (!response || !response.ok) {
+          var err = new Error('respuesta paralelo: ' + response.status);
+          err.status = response && response.status;
+          throw err;
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        const value = Number(data && (data.promedio || data.venta || 0));
+        if (!Number.isFinite(value) || value <= 0) throw new Error('tasa');
+        return value;
+      })
+      .catch(function (err) {
+        clearTimeout(timeoutId);
+        if (attempt < maxAttempts && (err.name === 'AbortError' || err.name === 'TypeError' || (err.status && err.status >= 500))) {
+          const delay = 500 * Math.pow(2, attempt - 1);
+          return new Promise(function (resolve) {
+            setTimeout(function () { resolve(fetchParalelo(attempt + 1)); }, delay);
+          });
+        }
+        throw err;
+      });
+  }
+
+  fetchBCV();
+  fetchP2P();
 }
 
 function fetchForDate(date) {
@@ -1341,120 +2923,382 @@ function fetchForDate(date) {
   fx.loading = true;
   fx.error = '';
   renderFx();
-  const finish = function () {
+
+  fetchBothRates(date, function () {
     fx.loading = false;
+    // Check if both failed and we have no cached data
+    if (!(fx.rate > 0) && !(fx.rateP2P > 0)) {
+      fx.error = 'No se pudo consultar ninguna tasa. Escríbelas a mano.';
+    } else if (!(fx.rate > 0)) {
+      fx.error = 'No se pudo consultar la tasa BCV (la tasa P2P sí está disponible).';
+    } else if (!(fx.rateP2P > 0)) {
+      fx.error = 'No se pudo consultar la tasa P2P (la tasa BCV sí está disponible).';
+    }
     renderFx();
     saveState();
-  };
-  if (typeof fetch !== 'function') {
-    fx.error = 'No se pudo consultar la tasa del BCV. Escríbela a mano.';
-    finish();
-    return;
-  }
-  if (date === todayISO()) {
-    fetch(RATE_API, { cache: 'no-store' })
-      .then(function (response) {
-        if (!response || !response.ok) throw new Error('respuesta');
-        return response.json();
-      })
-      .then(function (data) {
-        const value = Number(data && (data.promedio || data.venta || 0));
-        if (!Number.isFinite(value) || value <= 0) throw new Error('tasa');
-        const published = typeof data.fechaActualizacion === 'string'
-          ? data.fechaActualizacion.slice(0, 10)
-          : date;
-        storeRate(date, value, published, 'bcv');
-        finish();
-      }, function () {
-        fx.error = fx.rate > 0
-          ? 'Sin conexión · usando la última tasa guardada'
-          : 'No se pudo consultar la tasa del BCV. Escríbela a mano.';
-        finish();
-      });
-    return;
-  }
-  lookupHistoric(date, 0, finish);
+  });
 }
 
-function lookupHistoric(date, attempt, finish) {
+function lookupHistoric(date, attempt, finish, isP2P) {
   const fx = state.fx;
+  const apiUrl = isP2P ? HISTORY_API_PARALELO : HISTORY_API;
   if (attempt > 7 || date < RATE_MIN_DATE) {
-    fx.error = 'No hay tasa publicada cerca de esa fecha. Escríbela a mano.';
-    finish();
+    finish(new Error('No hay tasa publicada cerca de esa fecha. Escríbela a mano.'));
     return;
   }
-  fetch(HISTORY_API + date.replace(/-/g, '/'), { cache: 'no-store' })
+  const controller = new AbortController();
+  const timeoutId = setTimeout(function () { controller.abort(); }, 8000);
+  fetch(apiUrl + date.replace(/-/g, '/'), {
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (compatible; CalculadoraCientifica/1.0)'
+    },
+    signal: controller.signal
+  })
     .then(function (response) {
-      if (!response || !response.ok) throw new Error('sin datos');
+      clearTimeout(timeoutId);
+      if (!response || !response.ok) throw new Error('sin datos: ' + response.status);
       return response.json();
     })
     .then(function (data) {
       const value = Number(data && (data.promedio || data.venta || 0));
       if (!Number.isFinite(value) || value <= 0) throw new Error('tasa');
       const published = typeof data.fecha === 'string' ? data.fecha.slice(0, 10) : date;
-      storeRate(fx.date, value, published, 'bcv');
-      finish();
-    }, function () {
-      lookupHistoric(shiftIsoDate(date, -1), attempt + 1, finish);
+      storeRate(fx.date, value, published, isP2P ? 'paralelo' : 'bcv', isP2P);
+      finish(null);
+    }, function (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || err.name === 'TypeError') {
+        // Network error, try previous day
+        lookupHistoric(shiftIsoDate(date, -1), attempt + 1, finish, isP2P);
+      } else {
+        // HTTP error, try previous day
+        lookupHistoric(shiftIsoDate(date, -1), attempt + 1, finish, isP2P);
+      }
     });
 }
 
-function ensureRateForDate() {
-  const fx = state.fx;
-  if (fx.rate > 0) {
-    if (fx.source === 'manual') return;
-    if (fx.date !== todayISO()) return;
-    if (Date.now() - (fx.fetchedAt || 0) < RATE_MAX_AGE) return;
-  }
-  fetchForDate(fx.date);
+// ===== Units Converter Functions =====
+function getUnitsCategory() {
+  return UNITS_DATA[state.units.category];
 }
 
-function selectDate(value) {
+function populateCategories() {
+  unitsCategory.innerHTML = '';
+  Object.keys(UNITS_DATA).forEach(function (key) {
+    const cat = UNITS_DATA[key];
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = cat.label;
+    unitsCategory.appendChild(opt);
+  });
+  unitsCategory.value = state.units.category;
+}
+
+function populateUnits() {
+  const cat = getUnitsCategory();
+  if (!cat) return;
+  
+  const units = Object.keys(cat.units);
+  
+  // Populate from select
+  const fromVal = unitsFrom.value;
+  unitsFrom.innerHTML = '';
+  units.forEach(function (key) {
+    const unit = cat.units[key];
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = unit.label;
+    unitsFrom.appendChild(opt);
+  });
+  unitsFrom.value = units.includes(fromVal) ? fromVal : state.units.from;
+  
+  // Populate to select
+  const toVal = unitsTo.value;
+  unitsTo.innerHTML = '';
+  units.forEach(function (key) {
+    const unit = cat.units[key];
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = unit.label;
+    unitsTo.appendChild(opt);
+  });
+  unitsTo.value = units.includes(toVal) ? toVal : state.units.to;
+  
+  // Update unit labels
+  updateUnitLabels();
+}
+
+function updateUnitLabels() {
+  const cat = getUnitsCategory();
+  if (!cat) return;
+  
+  const fromUnit = cat.units[unitsFrom.value];
+  const toUnit = cat.units[unitsTo.value];
+  
+  if (fromUnit) unitsFromUnit.textContent = fromUnit.label;
+  if (toUnit) unitsToUnit.textContent = toUnit.label;
+}
+
+function convertUnits(value, fromUnit, toUnit) {
+  const cat = getUnitsCategory();
+  if (!cat) return NaN;
+  
+  const from = cat.units[fromUnit];
+  const to = cat.units[toUnit];
+  
+  if (!from || !to) return NaN;
+  
+  // Handle temperature specially
+  if (cat.isTemperature) {
+    // Convert from source to base (Celsius)
+    const baseValue = value * from.toBase + (from.offset || 0);
+    // Convert from base to target
+    return baseValue * to.fromBase + (to.toBaseOffset || 0);
+  }
+  
+  // Standard conversion via base unit
+  const baseValue = value * from.toBase;
+  return baseValue / to.toBase;
+}
+
+function formatUnitsResult(value) {
+  if (!Number.isFinite(value)) return '—';
+  if (value === 0) return '0';
+  
+  const abs = Math.abs(value);
+  if (abs >= 1e12 || abs < 1e-9) {
+    const parts = value.toExponential(8).split('e');
+    const mantissa = parts[0].replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    return mantissa + 'e' + parts[1].replace('+', '');
+  }
+  
+  // Round to maximum 4 decimal places
+  const rounded = Math.round(value * 10000) / 10000;
+  let text = String(rounded);
+  if (text.indexOf('e') !== -1) return text;
+  
+  const negative = text.charAt(0) === '-';
+  if (negative) text = text.slice(1);
+  const pieces = text.split('.');
+  return (negative ? '-' : '') + pieces[0] + (pieces[1] ? '.' + pieces[1] : '');
+}
+
+function getUnitSymbol(unitKey) {
+  const cat = getUnitsCategory();
+  if (!cat) return unitKey;
+  const unit = cat.units[unitKey];
+  if (!unit) return unitKey;
+  // Extract symbol from label (e.g., "Metro (m)" -> "m")
+  const match = unit.label.match(/\(([^)]+)\)$/);
+  return match ? match[1] : unitKey;
+}
+
+function renderUnits() {
+  const units = state.units;
+  const cat = getUnitsCategory();
+  if (!cat) return;
+  
+  // Update category select
+  unitsCategory.value = units.category;
+  
+  // Populate units if needed
+  populateUnits();
+  
+  // Set from/to values
+  unitsFrom.value = units.from;
+  unitsTo.value = units.to;
+  updateUnitLabels();
+  
+  // Update amount input
+  if (document.activeElement !== unitsAmount) {
+    unitsAmount.value = units.amount;
+  }
+  
+  // Perform conversion
+  const amount = parseMoneyText(unitsAmount.value);
+  let hasConversion = false;
+  let converted = 0;
+  
+  if (!Number.isNaN(amount)) {
+    converted = convertUnits(amount, units.from, units.to);
+    if (Number.isFinite(converted)) {
+      hasConversion = true;
+      const fromSym = getUnitSymbol(units.from);
+      const toSym = getUnitSymbol(units.to);
+      unitsResult.textContent = formatUnitsResult(converted) + ' ' + toSym;
+      unitsDetail.textContent = formatUnitsResult(amount) + ' ' + fromSym + ' = ' + formatUnitsResult(converted) + ' ' + toSym;
+      unitsUseSource.textContent = 'Usar ' + formatUnitsResult(amount) + ' ' + fromSym;
+      unitsUseResult.textContent = 'Usar ' + formatUnitsResult(converted) + ' ' + toSym;
+    }
+  }
+  
+  if (!hasConversion) {
+    unitsResult.textContent = '—';
+    unitsDetail.textContent = 'Escribe un valor para convertir';
+    unitsUseSource.disabled = true;
+    unitsUseResult.disabled = true;
+    unitsUseSource.textContent = 'Usar valor';
+    unitsUseResult.textContent = 'Usar resultado';
+  } else {
+    unitsUseSource.disabled = false;
+    unitsUseResult.disabled = false;
+  }
+  
+  // Render quick conversions
+  renderQuickConversions();
+}
+
+function renderQuickConversions() {
+  const cat = getUnitsCategory();
+  if (!cat) return;
+  
+  const units = state.units;
+  const amount = parseMoneyText(unitsAmount.value);
+  if (Number.isNaN(amount)) {
+    unitsQuick.innerHTML = '';
+    return;
+  }
+  
+  // Get all units in this category except the current from unit
+  const allUnits = Object.keys(cat.units).filter(function (u) { return u !== units.from; });
+  
+  // Pick a few representative units for quick conversion
+  const quickUnits = allUnits.slice(0, 8);
+  
+  unitsQuick.innerHTML = '';
+  quickUnits.forEach(function (targetUnit) {
+    const converted = convertUnits(amount, units.from, targetUnit);
+    if (!Number.isFinite(converted)) return;
+    
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'units-quick-btn';
+    const targetSym = getUnitSymbol(targetUnit);
+    btn.textContent = formatUnitsResult(converted) + ' ' + targetSym;
+    btn.title = cat.units[targetUnit].label;
+    btn.addEventListener('click', function () {
+      unitsTo.value = targetUnit;
+      units.to = targetUnit;
+      updateUnitLabels();
+      renderUnits();
+      saveState();
+    });
+    unitsQuick.appendChild(btn);
+  });
+}
+
+function insertUnitsConversion(value) {
+  if (!Number.isFinite(value) || value <= 0) return;
+  const text = String(Number(value.toPrecision(12)));
+  const trimmed = state.expr.trim();
+  const appending = !trimmed || /[+\-*/^(]$/.test(trimmed);
+  state.expr = appending ? state.expr + text : text;
+  state.caret = state.expr.length;
+  state.lastWasEval = false;
+  if (state.tab !== 'calc') setTab('calc');
+  render();
+  setStatus('Valor llevado a la calculadora: ' + text);
+  saveState();
+}
+
+function ensureUnitsInitialized() {
+  populateCategories();
+  populateUnits();
+  renderUnits();
+}
+
+function ensureRateForDate(dateArg) {
   const fx = state.fx;
   const today = todayISO();
-  let date = /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? value : today;
+  let date = dateArg && /^\d{4}-\d{2}-\d{2}$/.test(dateArg) ? dateArg : today;
   if (date > today) date = today;
   if (date < RATE_MIN_DATE) date = RATE_MIN_DATE;
   fx.date = date;
   fx.error = '';
+
+  // Load BCV cache
   const cached = fx.cache[date];
   if (cached && cached.rate > 0) {
     fx.rate = cached.rate;
     fx.rateDate = cached.published;
     fx.source = cached.source;
     fx.fetchedAt = cached.fetchedAt || 0;
-    renderFx();
-    saveState();
-    if (date === today && cached.source !== 'manual' && Date.now() - (cached.fetchedAt || 0) >= RATE_MAX_AGE) {
-      fetchForDate(date);
-    }
-    return;
+  } else {
+    fx.rate = 0;
+    fx.rateDate = null;
+    fx.source = '';
+    fx.fetchedAt = 0;
   }
-  fx.rate = 0;
-  fx.rateDate = null;
-  fx.source = '';
-  fx.fetchedAt = 0;
+
+  // Load P2P cache
+  const cachedP2P = fx.cacheP2P[date];
+  if (cachedP2P && cachedP2P.rate > 0) {
+    fx.rateP2P = cachedP2P.rate;
+    fx.rateDateP2P = cachedP2P.published;
+    fx.sourceP2P = cachedP2P.source;
+    fx.fetchedAtP2P = cachedP2P.fetchedAt || 0;
+  } else {
+    fx.rateP2P = 0;
+    fx.rateDateP2P = null;
+    fx.sourceP2P = '';
+    fx.fetchedAtP2P = 0;
+  }
+
   renderFx();
   saveState();
-  fetchForDate(date);
+
+  // Auto-fetch if today and cache is stale
+  if (date === today) {
+    const bcvStale = cached && cached.source !== 'manual' && Date.now() - (cached.fetchedAt || 0) >= RATE_MAX_AGE;
+    const p2pStale = cachedP2P && cachedP2P.source !== 'manual' && Date.now() - (cachedP2P.fetchedAt || 0) >= RATE_MAX_AGE;
+    if ((cached && bcvStale) || (!cached) || (cachedP2P && p2pStale) || (!cachedP2P)) {
+      fetchForDate(date);
+    }
+  }
+}
+
+function selectDate(date) {
+  state.fx.date = date;
+  ensureRateForDate(date);
+  renderFx();
+  saveState();
 }
 
 function setTab(tab) {
-  state.tab = tab === 'fx' ? 'fx' : 'calc';
+  if (tab === 'fx') {
+    state.tab = 'fx';
+  } else if (tab === 'units') {
+    state.tab = 'units';
+  } else {
+    state.tab = 'calc';
+  }
   const isCalc = state.tab === 'calc';
+  const isFx = state.tab === 'fx';
+  const isUnits = state.tab === 'units';
   calcPane.hidden = !isCalc;
   calcToolbar.hidden = !isCalc;
-  fxPane.hidden = isCalc;
+  fxPane.hidden = !isFx;
+  unitsPane.hidden = !isUnits;
   tabButtons.forEach(function (btn) {
     btn.setAttribute('aria-selected', String(btn.dataset.tab === state.tab));
   });
   if (isCalc) {
     updateResult();
-  } else {
+  } else if (isFx) {
+    // Always default to USD → VES when opening the FX tab
+    if (state.fx.mode !== 'usd2ves') {
+      state.fx.mode = 'usd2ves';
+      state.fx.dir = 'usd2ves';
+    }
     exprInput.blur();
     fxDate.max = todayISO();
     renderFx();
-    ensureRateForDate();
+    ensureRateForDate(state.fx.date);
+  } else if (isUnits) {
+    exprInput.blur();
+    ensureUnitsInitialized();
   }
 }
 
@@ -1495,18 +3339,31 @@ function saveState() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       angle: angleMode,
+      calcMode: state.calcMode,
       mem: state.mem,
       ans: ansValue,
       history: state.history.slice(0, 30),
       fx: {
+        mode: state.fx.mode,
         amount: state.fx.amount,
         dir: state.fx.dir,
         date: state.fx.date,
         rate: state.fx.rate,
+        rateP2P: state.fx.rateP2P,
         source: state.fx.source,
+        sourceP2P: state.fx.sourceP2P,
         rateDate: state.fx.rateDate,
+        rateDateP2P: state.fx.rateDateP2P,
         fetchedAt: state.fx.fetchedAt,
-        cache: state.fx.cache
+        fetchedAtP2P: state.fx.fetchedAtP2P,
+        cache: state.fx.cache,
+        cacheP2P: state.fx.cacheP2P
+      },
+      units: {
+        category: state.units.category,
+        from: state.units.from,
+        to: state.units.to,
+        amount: state.units.amount
       }
     }));
   } catch (_) { /* almacenamiento no disponible */ }
@@ -1518,6 +3375,7 @@ function loadState() {
     if (!raw) return;
     const data = JSON.parse(raw);
     if (data.angle === 'DEG' || data.angle === 'RAD') angleMode = data.angle;
+    if (data.calcMode === 'std' || data.calcMode === 'sci') state.calcMode = data.calcMode;
     if (typeof data.mem === 'number' && Number.isFinite(data.mem)) state.mem = data.mem;
     if (typeof data.ans === 'number' && Number.isFinite(data.ans)) {
       ansValue = data.ans;
@@ -1527,6 +3385,7 @@ function loadState() {
       const fx = data.fx;
       const today = todayISO();
       if (typeof fx.amount === 'string') state.fx.amount = fx.amount;
+      if (fx.mode === 'usd2ves' || fx.mode === 'usdt2ves' || fx.mode === 'usd2usdt') state.fx.mode = fx.mode;
       if (fx.dir === 'usd2ves' || fx.dir === 'ves2usd') state.fx.dir = fx.dir;
       if (typeof fx.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fx.date)) {
         state.fx.date = fx.date > today ? today : fx.date;
@@ -1544,6 +3403,19 @@ function loadState() {
           }
         });
       }
+      if (fx.cacheP2P && typeof fx.cacheP2P === 'object') {
+        Object.keys(fx.cacheP2P).forEach(function (key) {
+          const entry = fx.cacheP2P[key];
+          if (entry && typeof entry.rate === 'number' && entry.rate > 0) {
+            state.fx.cacheP2P[key] = {
+              rate: entry.rate,
+              published: typeof entry.published === 'string' ? entry.published : key,
+              source: entry.source === 'manual' ? 'manual' : (entry.source === 'paralelo' ? 'paralelo' : (entry.source === 'usdtve' ? 'usdtve' : 'binance')),
+              fetchedAt: typeof entry.fetchedAt === 'number' ? entry.fetchedAt : 0
+            };
+          }
+        });
+      }
       if (typeof fx.rate === 'number' && fx.rate > 0) {
         const source = fx.source === 'manual' ? 'manual' : 'bcv';
         const published = typeof fx.rateDate === 'string' ? fx.rateDate : state.fx.date;
@@ -1552,6 +3424,16 @@ function loadState() {
           published: published,
           source: source,
           fetchedAt: typeof fx.fetchedAt === 'number' ? fx.fetchedAt : 0
+        };
+      }
+      if (typeof fx.rateP2P === 'number' && fx.rateP2P > 0) {
+        const source = fx.sourceP2P === 'manual' ? 'manual' : (fx.sourceP2P === 'paralelo' ? 'paralelo' : (fx.sourceP2P === 'usdtve' ? 'usdtve' : 'binance'));
+        const published = typeof fx.rateDateP2P === 'string' ? fx.rateDateP2P : state.fx.date;
+        state.fx.cacheP2P[state.fx.date] = {
+          rate: fx.rateP2P,
+          published: published,
+          source: source,
+          fetchedAt: typeof fx.fetchedAtP2P === 'number' ? fx.fetchedAtP2P : 0
         };
       }
       const cached = state.fx.cache[state.fx.date];
@@ -1566,11 +3448,30 @@ function loadState() {
         state.fx.source = '';
         state.fx.fetchedAt = 0;
       }
+      const cachedP2P = state.fx.cacheP2P[state.fx.date];
+      if (cachedP2P && cachedP2P.rate > 0) {
+        state.fx.rateP2P = cachedP2P.rate;
+        state.fx.rateDateP2P = cachedP2P.published;
+        state.fx.sourceP2P = cachedP2P.source;
+        state.fx.fetchedAtP2P = cachedP2P.fetchedAt || 0;
+      } else {
+        state.fx.rateP2P = 0;
+        state.fx.rateDateP2P = null;
+        state.fx.sourceP2P = '';
+        state.fx.fetchedAtP2P = 0;
+      }
     }
     if (Array.isArray(data.history)) {
       state.history = data.history
         .filter(function (item) { return item && typeof item.expr === 'string' && typeof item.result === 'string'; })
         .slice(0, 30);
+    }
+    if (data.units && typeof data.units === 'object') {
+      const units = data.units;
+      if (UNITS_DATA[units.category]) state.units.category = units.category;
+      if (UNITS_DATA[state.units.category] && UNITS_DATA[state.units.category].units[units.from]) state.units.from = units.from;
+      if (UNITS_DATA[state.units.category] && UNITS_DATA[state.units.category].units[units.to]) state.units.to = units.to;
+      if (typeof units.amount === 'string') state.units.amount = units.amount;
     }
   } catch (_) { /* datos corruptos */ }
 }
@@ -1579,6 +3480,14 @@ function syncAngleButtons() {
   angleButtons.forEach(function (btn) {
     btn.setAttribute('aria-pressed', String(btn.dataset.angle === angleMode));
   });
+}
+
+function syncCalcModeButtons() {
+  calcModeButtons.forEach(function (btn) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.calcMode === state.calcMode));
+  });
+  // Toggle .std class on keys container for CSS grid layout
+  keysEl.classList.toggle('std', state.calcMode === 'std');
 }
 
 keysEl.addEventListener('click', function (event) {
@@ -1678,6 +3587,18 @@ angleButtons.forEach(function (btn) {
   });
 });
 
+calcModeButtons.forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    state.calcMode = btn.dataset.calcMode;
+    calcModeButtons.forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.calcMode === state.calcMode));
+    });
+    rebuildKeys();
+    syncCalcModeButtons();
+    saveState();
+  });
+});
+
 document.querySelectorAll('[data-mem]').forEach(function (btn) {
   btn.addEventListener('click', function () { handleMemory(btn.dataset.mem); });
 });
@@ -1701,16 +3622,40 @@ fxAmount.addEventListener('input', function () {
 fxRate.addEventListener('input', function () {
   const fx = state.fx;
   const value = parseMoneyText(fxRate.value);
-  fx.rate = Number.isNaN(value) ? 0 : value;
-  fx.source = 'manual';
-  fx.rateDate = fx.date;
-  fx.fetchedAt = Date.now();
-  fx.error = '';
-  if (fx.rate > 0) {
-    fx.cache[fx.date] = { rate: fx.rate, published: fx.date, source: 'manual', fetchedAt: fx.fetchedAt };
-    pruneRateCache();
+  const isP2P = fx.mode === 'usdt2ves';
+  const isUsd2Usdt = fx.mode === 'usd2usdt';
+
+  if (isUsd2Usdt) {
+    // In USD→USDT mode, the rate input shows the ratio, but we don't manually edit it
+    // User would edit BCV or P2P rate in their respective modes
+    renderFx();
+    return;
+  }
+
+  if (isP2P) {
+    fx.rateP2P = Number.isNaN(value) ? 0 : value;
+    fx.sourceP2P = 'manual';
+    fx.rateDateP2P = fx.date;
+    fx.fetchedAtP2P = Date.now();
+    fx.error = '';
+    if (fx.rateP2P > 0) {
+      fx.cacheP2P[fx.date] = { rate: fx.rateP2P, published: fx.date, source: 'manual', fetchedAt: fx.fetchedAtP2P };
+      pruneRateCache(fx.cacheP2P);
+    } else {
+      delete fx.cacheP2P[fx.date];
+    }
   } else {
-    delete fx.cache[fx.date];
+    fx.rate = Number.isNaN(value) ? 0 : value;
+    fx.source = 'manual';
+    fx.rateDate = fx.date;
+    fx.fetchedAt = Date.now();
+    fx.error = '';
+    if (fx.rate > 0) {
+      fx.cache[fx.date] = { rate: fx.rate, published: fx.date, source: 'manual', fetchedAt: fx.fetchedAt };
+      pruneRateCache(fx.cache);
+    } else {
+      delete fx.cache[fx.date];
+    }
   }
   renderFx();
   saveState();
@@ -1719,21 +3664,63 @@ fxRate.addEventListener('input', function () {
 fxRate.addEventListener('blur', function () { renderFx(); });
 
 fxSwap.addEventListener('click', function () {
-  state.fx.dir = state.fx.dir === 'usd2ves' ? 'ves2usd' : 'usd2ves';
+  const fx = state.fx;
+  if (fx.mode === 'usd2usdt') return; // No swap for USD→USDT
+  fx.dir = fx.dir === 'usd2ves' ? 'ves2usd' : 'usd2ves';
   renderFx();
   saveState();
 });
 
 fxRefresh.addEventListener('click', function () { fetchForDate(state.fx.date); });
 
+// Mode tab listeners
+fxModeTabs.forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    state.fx.mode = btn.dataset.fxMode;
+    // Reset direction for usd2usdt mode
+    if (state.fx.mode === 'usd2usdt') {
+      state.fx.dir = 'usd2ves';
+    }
+    renderFx();
+    saveState();
+  });
+});
+
 fxUseSource.addEventListener('click', function () {
   insertConversion(parseMoneyText(fxAmount.value));
 });
 
 fxUseResult.addEventListener('click', function () {
+  const fx = state.fx;
   const amount = parseMoneyText(fxAmount.value);
-  if (!(state.fx.rate > 0) || Number.isNaN(amount)) return;
-  insertConversion(state.fx.dir === 'usd2ves' ? amount * state.fx.rate : amount / state.fx.rate);
+  if (Number.isNaN(amount)) return;
+
+  let converted = 0;
+  if (fx.mode === 'usd2ves') {
+    if (!(fx.rate > 0)) return;
+    converted = fx.dir === 'usd2ves' ? amount * fx.rate : amount / fx.rate;
+  } else if (fx.mode === 'usdt2ves') {
+    if (!(fx.rateP2P > 0)) return;
+    converted = fx.dir === 'usd2ves' ? amount * fx.rateP2P : amount / fx.rateP2P;
+  } else { // usd2usdt
+    if (!(fx.rate > 0) || !(fx.rateP2P > 0)) return;
+    converted = amount * fx.rate / fx.rateP2P;
+  }
+  insertConversion(converted);
+});
+
+fxReset.addEventListener('click', function () {
+  const fx = state.fx;
+  // Set amount to 1 in the source currency
+  if (fx.mode === 'usd2ves' || fx.mode === 'usd2usdt') {
+    fxAmount.value = '1';
+    fx.amount = '1';
+  } else if (fx.mode === 'usdt2ves') {
+    fxAmount.value = '1';
+    fx.amount = '1';
+  }
+  renderFx();
+  saveState();
 });
 
 fxDate.addEventListener('change', function () { selectDate(fxDate.value); });
@@ -1744,11 +3731,671 @@ displayEl.addEventListener('animationend', function () {
   displayEl.classList.remove('shake');
 });
 
+// ===== Units Converter Event Listeners =====
+unitsCategory.addEventListener('change', function () {
+  state.units.category = unitsCategory.value;
+  // Reset from/to to first available units in new category
+  const cat = UNITS_DATA[state.units.category];
+  if (cat) {
+    const units = Object.keys(cat.units);
+    state.units.from = units[0];
+    state.units.to = units[1] || units[0];
+  }
+  populateUnits();
+  renderUnits();
+  saveState();
+});
+
+unitsFrom.addEventListener('change', function () {
+  state.units.from = unitsFrom.value;
+  updateUnitLabels();
+  renderUnits();
+  saveState();
+});
+
+unitsTo.addEventListener('change', function () {
+  state.units.to = unitsTo.value;
+  updateUnitLabels();
+  renderUnits();
+  saveState();
+});
+
+unitsAmount.addEventListener('input', function () {
+  state.units.amount = unitsAmount.value;
+  renderUnits();
+  saveState();
+});
+
+unitsSwap.addEventListener('click', function () {
+  const temp = state.units.from;
+  state.units.from = state.units.to;
+  state.units.to = temp;
+  unitsFrom.value = state.units.from;
+  unitsTo.value = state.units.to;
+  updateUnitLabels();
+  renderUnits();
+  saveState();
+});
+
+unitsUseSource.addEventListener('click', function () {
+  const amount = parseMoneyText(unitsAmount.value);
+  if (Number.isNaN(amount)) return;
+  insertUnitsConversion(amount);
+});
+
+unitsUseResult.addEventListener('click', function () {
+  const amount = parseMoneyText(unitsAmount.value);
+  if (Number.isNaN(amount)) return;
+  const converted = convertUnits(amount, state.units.from, state.units.to);
+  if (Number.isFinite(converted)) {
+    insertUnitsConversion(converted);
+  }
+});
+
+unitsReset.addEventListener('click', function () {
+  unitsAmount.value = '1';
+  state.units.amount = '1';
+  renderUnits();
+  saveState();
+});
+
+// ===== Theme Toggle Logic =====
+function initTheme() {
+  var savedTheme = localStorage.getItem('theme');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var isDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+  applyTheme(isDark);
+  updateThemeToggle(isDark);
+}
+
+function applyTheme(isDark) {
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  // Update meta theme-color for PWA
+  var metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', isDark ? '#070a12' : '#f8fafc');
+  }
+}
+
+function updateThemeToggle(isDark) {
+  if (!themeToggle) return;
+  var sunIcon = themeToggle.querySelector('.icon-sun');
+  var moonIcon = themeToggle.querySelector('.icon-moon');
+  if (sunIcon && moonIcon) {
+    sunIcon.style.display = isDark ? 'block' : 'none';
+    moonIcon.style.display = isDark ? 'none' : 'block';
+  }
+  themeToggle.setAttribute('aria-pressed', String(isDark));
+  themeToggle.title = isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
+  themeToggle.setAttribute('aria-label', isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener('click', function () {
+    var currentTheme = document.documentElement.getAttribute('data-theme');
+    var isDark = currentTheme === 'dark';
+    applyTheme(!isDark);
+    updateThemeToggle(!isDark);
+  });
+}
+
+// Listen for system theme changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+  if (!localStorage.getItem('theme')) {
+    applyTheme(e.matches);
+    updateThemeToggle(e.matches);
+  }
+});
+
+// ===== Minimal Mode Logic =====
+const MINIMAL_KEY = 'minimalMode';
+
+function isMinimalMode() {
+  return document.documentElement.getAttribute('data-minimal') === 'true';
+}
+
+function updateMinimalToggle(enabled) {
+  if (!minimalToggle) return;
+  var iconMin = minimalToggle.querySelector('.icon-minimal');
+  var iconFull = minimalToggle.querySelector('.icon-full');
+  if (iconMin && iconFull) {
+    iconMin.style.display = enabled ? 'none' : 'block';
+    iconFull.style.display = enabled ? 'block' : 'none';
+  }
+  minimalToggle.setAttribute('aria-pressed', String(enabled));
+  minimalToggle.title = enabled ? 'Cambiar a vista completa' : 'Activar vista minimalista';
+  minimalToggle.setAttribute('aria-label', enabled ? 'Cambiar a vista completa' : 'Activar vista minimalista');
+}
+
+function applyMinimalMode(enabled, persist) {
+  var on = Boolean(enabled);
+  document.documentElement.setAttribute('data-minimal', on ? 'true' : 'false');
+  if (persist !== false) {
+    try { localStorage.setItem(MINIMAL_KEY, on ? 'true' : 'false'); } catch (_) { /* almacenamiento no disponible */ }
+  }
+  updateMinimalToggle(on);
+  if (!on) {
+    document.body.classList.remove('hist-open');
+    updateHistToggle(false);
+  }
+  if (on && installBanner) {
+    // En vista minimalista no se muestra el banner de instalación
+    installBanner.classList.remove('show');
+    setTimeout(function () { installBanner.hidden = true; }, 200);
+  }
+}
+
+function initMinimalMode() {
+  var saved = null;
+  try { saved = localStorage.getItem(MINIMAL_KEY); } catch (_) { /* almacenamiento no disponible */ }
+  applyMinimalMode(saved === 'true', false);
+}
+
+if (minimalToggle) {
+  minimalToggle.addEventListener('click', function () {
+    applyMinimalMode(!isMinimalMode(), true);
+  });
+}
+
+// ===== Historial desplegable (vista minimalista) =====
+function updateHistToggle(open) {
+  if (!histToggle) return;
+  histToggle.setAttribute('aria-pressed', String(Boolean(open)));
+  histToggle.title = open ? 'Ocultar historial' : 'Ver historial';
+  histToggle.setAttribute('aria-label', open ? 'Ocultar historial' : 'Ver historial');
+}
+
+if (histToggle) {
+  histToggle.addEventListener('click', function () {
+    var open = document.body.classList.toggle('hist-open');
+    updateHistToggle(open);
+    if (open && typeof renderHistory === 'function') renderHistory();
+  });
+}
+
+// ===== Fullscreen Toggle Logic =====
+function updateFullscreenToggle() {
+  if (!fullscreenToggle) return;
+  var isFullscreen = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+  var enterIcon = fullscreenToggle.querySelector('.icon-fullscreen-enter');
+  var exitIcon = fullscreenToggle.querySelector('.icon-fullscreen-exit');
+  if (enterIcon && exitIcon) {
+    enterIcon.style.display = isFullscreen ? 'none' : 'block';
+    exitIcon.style.display = isFullscreen ? 'block' : 'none';
+  }
+  fullscreenToggle.setAttribute('aria-pressed', String(isFullscreen));
+  fullscreenToggle.title = isFullscreen ? 'Salir de pantalla completa' : 'Entrar en pantalla completa';
+  fullscreenToggle.setAttribute('aria-label', isFullscreen ? 'Salir de pantalla completa' : 'Entrar en pantalla completa');
+}
+
+function toggleFullscreen() {
+  var isFullscreen = !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+
+  if (isFullscreen) {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  } else {
+    var elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      elem.mozRequestFullScreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+  }
+}
+
+if (fullscreenToggle) {
+  fullscreenToggle.addEventListener('click', function () {
+    toggleFullscreen();
+  });
+}
+
+// Listen for fullscreen changes
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(function (event) {
+  document.addEventListener(event, updateFullscreenToggle);
+});
+
+// ===== Install Prompt Logic =====
+var deferredPrompt = null;
+var installDismissed = localStorage.getItem('installDismissed') === 'true';
+
+window.addEventListener('beforeinstallprompt', function (e) {
+  // Prevent the mini-infobar from appearing on mobile
+  e.preventDefault();
+  // Stash the event so it can be triggered later
+  deferredPrompt = e;
+  // Show the install banner if not dismissed
+  if (!installDismissed && installBanner) {
+    // Small delay to avoid showing immediately on load
+    setTimeout(function () {
+      if (isMinimalMode()) return; // en vista minimalista no se muestra
+      installBanner.hidden = false;
+      void installBanner.offsetWidth; // Force reflow
+      installBanner.classList.add('show');
+    }, 3000);
+  }
+});
+
+window.addEventListener('appinstalled', function () {
+  // Hide banner when app is installed
+  if (installBanner) {
+    installBanner.classList.remove('show');
+    setTimeout(function () { installBanner.hidden = true; }, 200);
+  }
+  deferredPrompt = null;
+  localStorage.setItem('installDismissed', 'true');
+});
+
+function showInstallPrompt() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function (choiceResult) {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      deferredPrompt = null;
+    });
+  }
+}
+
+function dismissInstallBanner() {
+  if (installBanner) {
+    installBanner.classList.remove('show');
+    setTimeout(function () { installBanner.hidden = true; }, 200);
+  }
+  localStorage.setItem('installDismissed', 'true');
+}
+
+if (installBtn) {
+  installBtn.addEventListener('click', function () {
+    showInstallPrompt();
+    dismissInstallBanner();
+  });
+}
+
+if (installDismiss) {
+  installDismiss.addEventListener('click', dismissInstallBanner);
+}
+
+if (installClose) {
+  installClose.addEventListener('click', dismissInstallBanner);
+}
+
+// ===== Help Modal Logic =====
+const HELP_CONTENT = {
+  calc: {
+    title: 'Calculadora Científica',
+    sections: [
+      {
+        title: 'Teclas principales',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M6 16h.01M10 16h.01M14 16h.01M18 16h.01"></path></svg>',
+        items: [
+          { key: '0–9 .', desc: 'Dígitos y punto decimal' },
+          { key: '+ − × ÷', desc: 'Operadores básicos' },
+          { key: '^', desc: 'Potencia (xʸ)' },
+          { key: '()', desc: 'Paréntesis para agrupar' },
+          { key: '%', desc: 'Porcentaje: 1000 + 10% = 1100, 1000 × 10% = 100, 10% = 0,1' },
+          { key: '!', desc: 'Factorial (n!)' },
+          { key: 'Ans', desc: 'Último resultado calculado' },
+          { key: 'π e', desc: 'Constantes matemáticas' },
+          { key: 'AC', desc: 'Borrar todo (Clear All)' },
+          { key: '⌫', desc: 'Retroceso (borra un carácter)' },
+          { key: '=', desc: 'Calcular (Enter)' },
+          { key: '2nd', desc: 'Alterna funciones secundarias (solo modo Científica)' },
+          { key: 'Estándar / Científica', desc: 'Botones en la barra de herramientas para cambiar entre calculadora básica y científica (por defecto: Estándar)' }
+        ]
+      },
+      {
+        title: 'Funciones (teclas FN)',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>',
+        items: [
+          { key: 'sin / sin⁻¹', desc: 'Seno / Arcoseno (2nd)' },
+          { key: 'cos / cos⁻¹', desc: 'Coseno / Arcocoseno (2nd)' },
+          { key: 'tan / tan⁻¹', desc: 'Tangente / Arcotangente (2nd)' },
+          { key: 'ln / eˣ', desc: 'Logaritmo natural / Exponencial (2nd)' },
+          { key: 'log / 10ˣ', desc: 'Logaritmo base 10 / Potencia de 10 (2nd)' },
+          { key: '√ / ∛', desc: 'Raíz cuadrada / Raíz cúbica (2nd)' },
+          { key: 'x² / x³', desc: 'Cuadrado / Cubo (2nd)' },
+          { key: 'xʸ / ʸ√x', desc: 'Potencia / Raíz y-ésima (2nd)' },
+          { key: '1/x / |x|', desc: 'Recíproco / Valor absoluto (2nd)' },
+          { key: 'n!', desc: 'Factorial' }
+        ]
+      },
+      {
+        title: 'Modo angular',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>',
+        items: [
+          { key: 'DEG', desc: 'Grados (360° = vuelta completa)' },
+          { key: 'RAD', desc: 'Radianes (2π rad = vuelta completa)' }
+        ]
+      },
+      {
+        title: 'Memoria',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L4.61 7.39a2 2 0 0 0 0 2.76L6 22l10-4L6 2z"></path><line x1="6" y1="2" x2="6" y2="22"></line></svg>',
+        items: [
+          { key: 'MC', desc: 'Borrar memoria (Memory Clear)' },
+          { key: 'MR', desc: 'Recuperar memoria (Memory Recall)' },
+          { key: 'M+', desc: 'Sumar a memoria' },
+          { key: 'M−', desc: 'Restar de memoria' },
+          { key: 'M (indicator)', desc: 'Muestra "M" cuando hay valor en memoria' }
+        ]
+      },
+      {
+        title: 'Atajos de teclado',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M6 16h.01M10 16h.01M14 16h.01M18 16h.01"></path></svg>',
+        items: [
+          { key: 'Enter', desc: 'Calcular (=)' },
+          { key: 'Escape', desc: 'Borrar todo (AC)' },
+          { key: 'Backspace', desc: 'Retroceso (⌫)' },
+          { key: '← → Home End', desc: 'Mover cursor en la expresión' },
+          { key: '0–9 + − * / ^ ( ) . % !', desc: 'Entrada directa de caracteres' },
+          { key: '⌨ (icono)', desc: 'Activa/desactiva modo teclado' }
+        ]
+      },
+      {
+        title: 'Historial',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>',
+        items: [
+          { key: 'Click en item', desc: 'Carga la expresión en la calculadora' },
+          { key: 'Máx. 30', desc: 'Se guardan los últimos 30 cálculos' },
+          { key: 'Limpiar', desc: 'Borra todo el historial' }
+        ]
+      },
+      {
+        title: 'Vista minimalista',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4a2 2 0 0 1-2 2H3"></path><path d="M15 3v4a2 2 0 0 0 2 2h4"></path><path d="M9 21v-4a2 2 0 0 0-2-2H3"></path><path d="M15 21v-4a2 2 0 0 1 2-2h4"></path></svg>',
+        items: [
+          { key: 'Botón de compactar', desc: 'Alterna entre vista completa y vista minimalista (una sola columna, sin historial lateral ni sombras)' },
+          { key: 'Botón de historial', desc: 'Sólo aparece en vista minimalista: muestra u oculta el historial debajo de la calculadora' },
+          { key: 'Preferencia guardada', desc: 'La vista elegida se recuerda al recargar la app' }
+        ]
+      }
+    ]
+  },
+  fx: {
+    title: 'Conversor de Divisas',
+    sections: [
+      {
+        title: 'Modos de conversión',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>',
+        items: [
+          { key: 'USD → VES', desc: 'Tasa oficial del BCV (Banco Central de Venezuela). Dólar oficial a bolívares.' },
+          { key: 'USDT (P2P) → VES', desc: 'Tasa de mercado P2P (Binance). Tether a bolívares. Incluye fallback a tasa paralela.' },
+          { key: 'USD → USDT', desc: 'Relación entre ambas tasas (BCV / P2P). 1 USD = X USDT. Sin botón de invertir.' }
+        ]
+      },
+      {
+        title: 'Cómo usar',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
+        items: [
+          { key: '1. Selecciona modo', desc: 'Elige USD→VES, USDT→VES o USD→USDT en las pestañas superiores' },
+          { key: '2. Escribe monto', desc: 'Ingresa la cantidad en el campo "Monto en…"' },
+          { key: '3. Ver resultado', desc: 'La conversión aparece automáticamente abajo' },
+          { key: '4. ⇅ Invertir', desc: 'Cambia la dirección (USD↔VES o USDT↔VES). No disponible en USD→USDT' },
+          { key: '5. Fecha', desc: 'Cambia la fecha para ver tasas históricas (desde 2023-01-03)' },
+          { key: '6. Tasa manual', desc: 'Puedes editar la tasa directamente en el campo "Tasa…"' },
+          { key: '7. Llevar a calculadora', desc: 'Usa los botones "Usar monto" o "Usar resultado" para pasar valores a la calculadora científica' },
+          { key: '8. Restablecer', desc: 'Botón "Restablecer" pone el monto en 1 USD/USDT y muestra el equivalente en VES según la tasa actual' }
+        ]
+      },
+      {
+        title: 'Fuentes de datos',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+        items: [
+          { key: 'BCV Oficial', desc: 've.dolarapi.com/v1/dolares/oficial — Tasa oficial del Banco Central de Venezuela' },
+          { key: 'usdt.com.ve (Binance P2P)', desc: 'www.usdt.com.ve/api/v1/rates/current — API agregada con tasas Binance P2P, Bybit y BCV. Usa buy_rate de Binance (usuarios compran USDT con VES)' },
+          { key: 'Paralelo (fallback)', desc: 've.dolarapi.com/v1/dolares/paralelo — Tasa de mercado paralela como respaldo si usdt.com.ve falla' }
+        ]
+      },
+      {
+        title: 'Detalles técnicos',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
+        items: [
+          { key: 'Caché local', desc: 'Hasta 90 tasas históricas por tipo (BCV y P2P) guardadas en localStorage' },
+          { key: 'Auto-actualización', desc: 'Al abrir la pestaña con fecha de hoy, busca tasas si la caché tiene >6 horas' },
+          { key: 'Reintentos', desc: 'Hasta 3 intentos con backoff exponencial (500ms, 1.5s, 3s) ante errores de red/servidor' },
+          { key: 'Timeout', desc: '10s para usdt.com.ve, 8s para BCV/Paralelo' },
+          { key: 'Persistencia', desc: 'Modo, monto, dirección, fecha, tasas y caché se guardan automáticamente' },
+          { key: 'Vista minimalista', desc: 'En vista minimalista se ocultan la fecha, los botones "Usar monto/resultado" y el resto de controles secundarios; queda monto → resultado → tasa → Restablecer' }
+        ]
+      }
+    ]
+  },
+  units: {
+    title: 'Conversor de Unidades',
+    sections: [
+      {
+        title: 'Cómo usar',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
+        items: [
+          { key: '1. Categoría', desc: 'Selecciona una de las 14 categorías en el menú desplegable' },
+          { key: '2. Unidades', desc: 'Elige "De" (origen) y "A" (destino) en los selectores' },
+          { key: '3. Valor', desc: 'Escribe el número a convertir en el campo "Valor"' },
+          { key: '4. Resultado', desc: 'Aparece automáticamente con símbolo de unidad' },
+          { key: '5. ⇅ Intercambiar', desc: 'Invierte origen y destino rápidamente' },
+          { key: '6. Conversiones rápidas', desc: 'Botones debajo muestran el valor en 8 unidades comunes de la categoría' },
+          { key: '7. Llevar a calculadora', desc: 'Usa "Usar valor" o "Usar resultado" para pasar a la calculadora científica' },
+          { key: '8. Restablecer', desc: 'Botón "Restablecer" pone el valor en 1 unidad de origen' }
+        ]
+      },
+      {
+        title: 'Categorías disponibles (14)',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>',
+        items: [
+          { key: 'Longitud (11)', desc: 'mm, cm, m, km, in, ft, yd, mi, nmi, ly, au, pc' },
+          { key: 'Masa / Peso (11)', desc: 'mg, g, kg, t, oz, lb, st, ct, gr, oz t, slug' },
+          { key: 'Temperatura (5)', desc: '°C, °F, K, °R, °Ré — Conversión con offsets' },
+          { key: 'Volumen (17)', desc: 'ml, cl, dl, l, m³, cm³, in³, ft³, gal, qt, pt, cup, fl oz, tbsp, tsp, bbl' },
+          { key: 'Área (11)', desc: 'mm², cm², m², km², ha, a, in², ft², yd², ac, mi²' },
+          { key: 'Velocidad (7)', desc: 'm/s, km/h, mph, kn, ft/s, Mach, c' },
+          { key: 'Tiempo (11)', desc: 'ns, µs, ms, s, min, h, d, wk, mo, yr, dec, cent' },
+          { key: 'Energía (10)', desc: 'J, kJ, cal, kcal, Wh, kWh, BTU, ft·lb, eV, therm' },
+          { key: 'Presión (11)', desc: 'Pa, kPa, MPa, bar, mbar, atm, psi, Torr, mmHg, inHg, kgf/cm²' },
+          { key: 'Potencia (8)', desc: 'W, kW, MW, HP, cv, BTU/h, kcal/h, ft·lb/s' },
+          { key: 'Datos (20)', desc: 'b, B, kb/kB, Kib/KiB, Mb/MB, Mib/MiB, Gb/GB, Gib/GiB, Tb/TB, Tib/TiB, Pb/PB' },
+          { key: 'Ángulo (7)', desc: '°, rad, gon, turn, \', ", mil' },
+          { key: 'Frecuencia (7)', desc: 'Hz, kHz, MHz, GHz, THz, RPM, RPS' },
+          { key: 'Fuerza (7)', desc: 'N, kN, MN, kgf, gf, lbf, pdl, kip' }
+        ]
+      },
+      {
+        title: 'Unidades menos comunes — explicación',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>',
+        type: 'table',
+        rows: [
+          ['Categoría', 'Unidad', 'Símbolo', 'Descripción'],
+          ['Longitud', 'Año luz', 'ly', 'Distancia que recorre la luz en 1 año (~9,46 billones km)'],
+          ['Longitud', 'Unidad astronómica', 'au', 'Distancia media Tierra–Sol (~149,6 millones km)'],
+          ['Longitud', 'Pársec', 'pc', 'Distancia con paralaje de 1 arco-segundo (~3,26 años luz)'],
+          ['Longitud', 'Milla náutica', 'nmi', '1852 m exactos; usada en navegación aérea/marítima'],
+          ['Masa', 'Stone', 'st', 'Unidad británica = 14 lb ≈ 6,35 kg'],
+          ['Masa', 'Quilate', 'ct', 'Para gemas = 200 mg exactos'],
+          ['Masa', 'Grano', 'gr', 'Unidad antigua = 64,8 mg; usada en balística/farmacia'],
+          ['Masa', 'Onza troy', 'oz t', 'Para metales preciosos = 31,1035 g (vs oz común 28,35 g)'],
+          ['Masa', 'Slug', 'slug', 'Unidad imperial de masa = 14,59 kg (fuerza de 1 lb acelera 1 ft/s²)'],
+          ['Temperatura', 'Rankine', '°R', 'Escala absoluta en grados Fahrenheit (0 °R = cero absoluto)'],
+          ['Temperatura', 'Réaumur', '°Ré', 'Escala histórica (0° = hielo, 80° = ebullición agua)'],
+          ['Volumen', 'Barril petróleo', 'bbl', 'Estándar petrolero = 158,987 L (42 gal US)'],
+          ['Volumen', 'Galón UK vs US', 'gal', 'UK = 4,546 L; US = 3,785 L (diferencia ~20%)'],
+          ['Área', 'Hectárea', 'ha', '10 000 m² (100 m × 100 m); usada en agricultura'],
+          ['Área', 'Are', 'a', '100 m² (10 m × 10 m); submúltiplo de hectárea'],
+          ['Área', 'Acre', 'ac', 'Unidad anglosajona = 4046,86 m²'],
+          ['Velocidad', 'Mach', 'Mach', 'Relación velocidad / velocidad del sonido (343 m/s a 20°C, nivel mar)'],
+          ['Velocidad', 'Nudo', 'kn', '1 milla náutica/hora = 0,514 m/s; navegación'],
+          ['Velocidad', 'c', 'c', 'Velocidad de la luz en el vacío = 299 792 458 m/s'],
+          ['Tiempo', 'Mes (30d)', 'mo', 'Convención de 30 días = 2 592 000 s'],
+          ['Tiempo', 'Año (365,25d)', 'yr', 'Año juliano = 31 557 600 s (incluye año bisiesto)'],
+          ['Energía', 'Electrón-voltio', 'eV', 'Energía cinética de 1 electrón acelerado por 1 V = 1,602×10⁻¹⁹ J'],
+          ['Energía', 'Termia', 'thm', '100 000 BTU ≈ 105,5 MJ; usada en facturación de gas'],
+          ['Energía', 'Pie-libra', 'ft·lb', 'Trabajo de 1 lb-fuerza sobre 1 pie = 1,356 J'],
+          ['Presión', 'Atmósfera', 'atm', 'Presión estándar al nivel del mar = 101 325 Pa'],
+          ['Presión', 'Bar', 'bar', '100 000 Pa exactos; ≈ 0,987 atm'],
+          ['Presión', 'Torr / mmHg', 'Torr', '1/760 atm ≈ 133,3 Pa; presión de 1 mm de mercurio'],
+          ['Presión', 'psi', 'psi', 'Libra-fuerza por pulgada cuadrada = 6894,76 Pa'],
+          ['Presión', 'kgf/cm²', 'kgf/cm²', 'Kilogramo-fuerza por cm² = 98 066,5 Pa (técnica)'],
+          ['Potencia', 'Caballo vapor', 'HP', 'Caballo de vapor métrico (PS) = 735,5 W; HP imperial = 745,7 W'],
+          ['Potencia', 'cv', 'cv', 'Caballo vapor métrico (cheval vapeur) = 735,5 W'],
+          ['Datos', 'Kibibyte (KiB)', 'KiB', '1024 bytes (binario) vs kB = 1000 bytes (decimal)'],
+          ['Datos', 'Mebibyte (MiB)', 'MiB', '1024 KiB = 1 048 576 bytes (binario)'],
+          ['Datos', 'Gibibyte (GiB)', 'GiB', '1024 MiB = 1 073 741 824 bytes (binario)'],
+          ['Datos', 'Tebibyte (TiB)', 'TiB', '1024 GiB ≈ 1,1 billones de bytes (binario)'],
+          ['Ángulo', 'Gradián (gon)', 'gon', 'Circunferencia = 400 gon (vs 360°); usado en topografía'],
+          ['Ángulo', 'Vuelta', 'turn', '1 revolución completa = 360° = 2π rad = 400 gon'],
+          ['Ángulo', 'Mil angular', 'mil', '1/6400 de circunferencia ≈ 0,05625°; usado en artillería'],
+          ['Frecuencia', 'RPM', 'RPM', 'Revoluciones por minuto (1 RPM = 1/60 Hz)'],
+          ['Fuerza', 'Kilogramo-fuerza', 'kgf', 'Fuerza que ejerce 1 kg bajo gravedad estándar = 9,80665 N'],
+          ['Fuerza', 'Kip', 'kip', '1000 lbf = 4448,22 N; ingeniería estructural EE. UU.'],
+          ['Fuerza', 'Poundal', 'pdl', 'Fuerza que acelera 1 lb-masa a 1 ft/s² = 0,138 N']
+        ]
+      },
+      {
+        title: 'Notas importantes',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>',
+        type: 'notes',
+        items: [
+          'La conversión de <strong>temperatura</strong> maneja correctamente los offsets (p. ej., 0 °C = 273,15 K = 32 °F = 491,67 °R = 0 °Ré).',
+          'Las unidades de <strong>datos</strong> distinguen entre prefijos decimales (k, M, G = ×1000) y binarios (Ki, Mi, Gi = ×1024).',
+          'La <strong>velocidad del sonido</strong> para Mach se toma a 20 °C y nivel del mar (343 m/s).',
+          'Los valores muy grandes (≥10¹²) o muy pequeños (<10⁻⁹) se muestran en <strong>notación científica</strong> (p. ej., 1.23e15).',
+          'No se usan separadores de miles; al copiar solo obtienes el número y el separador decimal (punto o coma).',
+          'La <strong>vista minimalista</strong> oculta las conversiones rápidas y los botones "Usar valor/resultado", dejando sólo valor → resultado → Restablecer.',
+          'La configuración (categoría, unidades, valor) se guarda automáticamente en <strong>localStorage</strong> y se restaura al recargar.'
+        ]
+      }
+    ]
+  }
+};
+
+function openHelpModal(tab) {
+  const content = HELP_CONTENT[tab] || HELP_CONTENT.calc;
+  let html = '';
+  
+  content.sections.forEach(function (section) {
+    html += '<div class="help-section">';
+    html += '<h3 class="help-section-title">' + (section.icon || '') + section.title + '</h3>';
+    
+    if (section.type === 'table') {
+      html += '<table class="help-table"><thead><tr>';
+      section.rows[0].forEach(function (th) { html += '<th>' + th + '</th>'; });
+      html += '</tr></thead><tbody>';
+      for (var i = 1; i < section.rows.length; i++) {
+        html += '<tr>';
+        section.rows[i].forEach(function (td, j) {
+          var tag = j === 0 ? 'th' : 'td';
+          var val = td;
+          if (j === 2) val = '<code>' + td + '</code>';
+          html += '<' + tag + '>' + val + '</' + tag + '>';
+        });
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+    } else if (section.type === 'notes') {
+      html += '<ul class="help-list">';
+      section.items.forEach(function (note) { html += '<li>' + note + '</li>'; });
+      html += '</ul>';
+    } else {
+      html += '<div class="help-grid">';
+      section.items.forEach(function (item) {
+        html += '<div class="help-item">';
+        html += '<span class="help-item-key">' + item.key + '</span>';
+        html += '<span class="help-item-desc">' + item.desc + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  
+  helpModalBody.innerHTML = html;
+  helpModal.hidden = false;
+  // Force reflow then open
+  void helpModal.offsetWidth;
+  helpModal.classList.add('open');
+  helpModalClose.focus();
+  // Trap focus
+  helpModal._wasFocused = document.activeElement;
+}
+
+function closeHelpModal() {
+  helpModal.classList.remove('open');
+  setTimeout(function () {
+    helpModal.hidden = true;
+    if (helpModal._wasFocused && typeof helpModal._wasFocused.focus === 'function') {
+      helpModal._wasFocused.focus();
+    }
+  }, 200);
+}
+
+if (infoToggle) {
+  infoToggle.addEventListener('click', function () {
+    openHelpModal(state.tab);
+  });
+}
+
+if (helpModalClose) {
+  helpModalClose.addEventListener('click', closeHelpModal);
+}
+
+if (helpModal) {
+  helpModal.addEventListener('click', function (e) {
+    if (e.target === helpModal) closeHelpModal();
+  });
+}
+
+// Close on Escape
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && helpModal && !helpModal.hidden && helpModal.classList.contains('open')) {
+    closeHelpModal();
+  }
+});
+
+// Trap focus inside modal
+helpModal.addEventListener('keydown', function (e) {
+  if (e.key === 'Tab' && helpModal.classList.contains('open')) {
+    var focusable = helpModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  }
+});
+
+initTheme();
+initMinimalMode();
+
 loadState();
-buildKeys();
+rebuildKeys();
 renderKeys();
 renderHistory();
 syncAngleButtons();
+syncCalcModeButtons();
 updateMem();
 render();
 setKeyboardMode(false);
